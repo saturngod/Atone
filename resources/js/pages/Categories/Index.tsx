@@ -90,7 +90,7 @@ export default function CategoriesIndex({
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Categories" />
-            <div className="container mx-auto max-w-4xl py-10">
+            <div className="container mx-auto max-w-4xl px-4 py-10 md:px-0">
                 <div className="mb-6 flex items-center justify-between">
                     <h1 className="text-3xl font-bold">Categories</h1>
                     <Dialog
