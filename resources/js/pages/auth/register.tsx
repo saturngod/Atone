@@ -1,6 +1,6 @@
 import { login } from '@/routes';
-import { store } from '@/routes/register';
 import { Form, Head } from '@inertiajs/react';
+import { useCallback, useEffect, useState } from 'react';
 
 import InputError from '@/components/input-error';
 import TextLink from '@/components/text-link';
@@ -10,7 +10,112 @@ import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import AuthLayout from '@/layouts/auth-layout';
 
+interface RegisterFormData {
+    action: string;
+    method: 'get' | 'post' | 'put' | 'patch' | 'delete';
+}
+
 export default function Register() {
+    const [formData, setFormData] = useState<RegisterFormData | null>(null);
+
+    const loadForm = useCallback(async () => {
+        try {
+            // @ts-expect-error - Module may not exist when registration is disabled
+            const registerModule = await import('@/routes/register');
+            const form = registerModule.store?.form?.() as
+                | RegisterFormData
+                | undefined;
+            if (form) {
+                setFormData(form);
+            }
+        } catch {
+            setFormData({ action: '/register', method: 'post' });
+        }
+    }, []);
+
+    useEffect(() => {
+        loadForm();
+    }, [loadForm]);
+
+    if (!formData) {
+        return (
+            <AuthLayout
+                title="Create an account"
+                description="Enter your details below to create your account"
+            >
+                <Head title="Register" />
+                <div className="flex flex-col gap-6">
+                    <div className="grid gap-6">
+                        <div className="grid gap-2">
+                            <Label htmlFor="name">Name</Label>
+                            <Input
+                                id="name"
+                                type="text"
+                                required
+                                autoFocus
+                                tabIndex={1}
+                                autoComplete="name"
+                                name="name"
+                                placeholder="Full name"
+                                disabled
+                            />
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="email">Email address</Label>
+                            <Input
+                                id="email"
+                                type="email"
+                                required
+                                tabIndex={2}
+                                autoComplete="email"
+                                name="email"
+                                placeholder="email@example.com"
+                                disabled
+                            />
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="password">Password</Label>
+                            <Input
+                                id="password"
+                                type="password"
+                                required
+                                tabIndex={3}
+                                autoComplete="new-password"
+                                name="password"
+                                placeholder="Password"
+                                disabled
+                            />
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="password_confirmation">
+                                Confirm password
+                            </Label>
+                            <Input
+                                id="password_confirmation"
+                                type="password"
+                                required
+                                tabIndex={4}
+                                autoComplete="new-password"
+                                name="password_confirmation"
+                                placeholder="Confirm password"
+                                disabled
+                            />
+                        </div>
+                        <Button
+                            type="submit"
+                            className="mt-2 w-full"
+                            tabIndex={5}
+                            disabled
+                        >
+                            <Spinner />
+                            Loading...
+                        </Button>
+                    </div>
+                </div>
+            </AuthLayout>
+        );
+    }
+
     return (
         <AuthLayout
             title="Create an account"
@@ -18,7 +123,8 @@ export default function Register() {
         >
             <Head title="Register" />
             <Form
-                {...store.form()}
+                action={formData.action}
+                method={formData.method}
                 resetOnSuccess={['password', 'password_confirmation']}
                 disableWhileProcessing
                 className="flex flex-col gap-6"

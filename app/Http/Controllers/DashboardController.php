@@ -4,12 +4,16 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use App\Models\Transaction;
+use App\Services\AnalyticsService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class DashboardController extends Controller
 {
+    public function __construct(
+        private AnalyticsService $analyticsService,
+    ) {}
+
     public function index(Request $request)
     {
         $user = $request->user();
@@ -18,21 +22,9 @@ class DashboardController extends Controller
             ->accounts()
             ->withSum('transactions', 'amount')
             ->get()
-            ->sum(fn($account) => $account->transactions_sum_amount ?? 0);
+            ->sum(fn ($account) => $account->transactions_sum_amount ?? 0);
 
-        $currentMonthIncome = $user
-            ->transactions()
-            ->whereMonth('date', now()->month)
-            ->whereYear('date', now()->year)
-            ->where('amount', '>', 0)
-            ->sum('amount');
-
-        $currentMonthExpenses = $user
-            ->transactions()
-            ->whereMonth('date', now()->month)
-            ->whereYear('date', now()->year)
-            ->where('amount', '<', 0)
-            ->sum('amount');
+        $analytics = $this->analyticsService->getDashboardData($user);
 
         $recentTransactions = $user
             ->transactions()
@@ -43,8 +35,12 @@ class DashboardController extends Controller
 
         return Inertia::render('Dashboard', [
             'totalBalance' => (float) $totalBalance,
-            'currentMonthIncome' => (float) $currentMonthIncome,
-            'currentMonthExpenses' => abs((float) $currentMonthExpenses),
+            'today' => $analytics['today'],
+            'thisMonth' => $analytics['thisMonth'],
+            'thisYear' => $analytics['thisYear'],
+            'byAccount' => $analytics['byAccount'],
+            'byCategory' => $analytics['byCategory'],
+            'trend' => $analytics['trend'],
             'recentTransactions' => $recentTransactions,
         ]);
     }

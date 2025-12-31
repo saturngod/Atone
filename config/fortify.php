@@ -144,7 +144,7 @@ return [
     */
 
     'features' => [
-        Features::registration(),
+        (filter_var(config('app.allow_register', true), FILTER_VALIDATE_BOOLEAN) ? Features::registration() : null),
         Features::resetPasswords(),
         Features::emailVerification(),
         // Features::twoFactorAuthentication([

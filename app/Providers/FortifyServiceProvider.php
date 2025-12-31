@@ -49,7 +49,7 @@ class FortifyServiceProvider extends ServiceProvider
     {
         Fortify::loginView(fn (Request $request) => Inertia::render('auth/login', [
             'canResetPassword' => Features::enabled(Features::resetPasswords()),
-            'canRegister' => Features::enabled(Features::registration()),
+            'canRegister' => Features::enabled(Features::registration()) && filter_var(config('app.allow_register', true), FILTER_VALIDATE_BOOLEAN),
             'status' => $request->session()->get('status'),
         ]));
 

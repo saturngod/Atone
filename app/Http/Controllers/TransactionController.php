@@ -7,6 +7,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\TransactionStoreRequest;
 use App\Http\Requests\TransactionUpdateRequest;
 use App\Models\Transaction;
+use App\Services\AnalyticsService;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -14,6 +15,10 @@ use Inertia\Inertia;
 class TransactionController extends Controller
 {
     use AuthorizesRequests;
+
+    public function __construct(
+        private AnalyticsService $analyticsService,
+    ) {}
 
     public function index(Request $request)
     {
@@ -30,7 +35,7 @@ class TransactionController extends Controller
             ->accounts()
             ->select('id', 'name', 'color')
             ->get()
-            ->map(fn($account) => [
+            ->map(fn ($account) => [
                 'id' => $account->id,
                 'name' => $account->name,
                 'color' => $account->color,
@@ -42,7 +47,7 @@ class TransactionController extends Controller
             ->select('id', 'name')
             ->orderBy('name')
             ->get()
-            ->map(fn($category) => [
+            ->map(fn ($category) => [
                 'id' => $category->id,
                 'name' => $category->name,
             ]);
@@ -76,6 +81,8 @@ class TransactionController extends Controller
             'date' => $request->date,
         ]);
 
+        $this->analyticsService->updateOnTransaction($transaction);
+
         return back()->with('success', 'Transaction added.');
     }
 
@@ -85,6 +92,8 @@ class TransactionController extends Controller
     ) {
         $this->authorize('update', $transaction);
 
+        $oldTransaction = clone $transaction;
+
         $transaction->update([
             'account_id' => (int) $request->account_id,
             'category_id' => $request->category_id ? (int) $request->category_id : null,
@@ -93,12 +102,16 @@ class TransactionController extends Controller
             'date' => $request->date,
         ]);
 
+        $this->analyticsService->updateOnTransaction($transaction, $oldTransaction);
+
         return back()->with('success', 'Transaction updated.');
     }
 
     public function destroy(Transaction $transaction)
     {
         $this->authorize('delete', $transaction);
+
+        $this->analyticsService->deleteTransaction($transaction);
 
         $transaction->delete();
 

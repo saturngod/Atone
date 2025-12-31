@@ -123,4 +123,17 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Allow Registration
+    |--------------------------------------------------------------------------
+    |
+    | This option controls whether user registration is allowed. Set to false
+    | to disable registration. When disabled, the register route will not
+    | be available and the registration link will be hidden on the login page.
+    |
+    */
+
+    'allow_register' => filter_var(env('ALLOW_REGISTER', true), FILTER_VALIDATE_BOOLEAN),
+
 ];
