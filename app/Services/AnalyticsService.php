@@ -11,6 +11,7 @@ use App\Models\AnalyticsMonthly;
 use App\Models\AnalyticsYearly;
 use App\Models\Transaction;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 
 class AnalyticsService
 {
@@ -27,7 +28,7 @@ class AnalyticsService
         $this->revertTransaction($transaction);
     }
 
-    private function applyTransaction(Transaction $transaction): void
+    public function applyTransaction(Transaction $transaction): void
     {
         $date = \Carbon\Carbon::parse($transaction->date);
         $isIncome = $transaction->amount >= 0;
@@ -47,7 +48,7 @@ class AnalyticsService
         }
     }
 
-    private function revertTransaction(Transaction $transaction): void
+    public function revertTransaction(Transaction $transaction): void
     {
         $date = \Carbon\Carbon::parse($transaction->date);
         $isIncome = $transaction->amount >= 0;
@@ -69,60 +70,121 @@ class AnalyticsService
 
     private function updateDaily(int $userId, \Carbon\Carbon $date, float $incomeChange, float $expenseChange): void
     {
-        AnalyticsDaily::updateOrCreate(
-            ['user_id' => $userId, 'date' => $date->toDateString()],
-            ['income' => 0, 'expense' => 0]
-        )->increment('income', $incomeChange);
+        $dateStr = $date->toDateString();
 
-        AnalyticsDaily::where('user_id', $userId)
-            ->where('date', $date->toDateString())
-            ->increment('expense', $expenseChange);
+        AnalyticsDaily::upsert(
+            [
+                'user_id' => $userId,
+                'date' => $dateStr,
+                'income' => $incomeChange,
+                'expense' => $expenseChange,
+            ],
+            ['user_id', 'date'],
+            [
+                'income' => DB::raw("analytics_daily.income + $incomeChange"),
+                'expense' => DB::raw("analytics_daily.expense + $expenseChange"),
+            ]
+        );
     }
 
     private function updateMonthly(int $userId, int $year, int $month, float $incomeChange, float $expenseChange): void
     {
-        AnalyticsMonthly::updateOrCreate(
-            ['user_id' => $userId, 'year' => $year, 'month' => $month],
-            ['income' => 0, 'expense' => 0]
-        )->increment('income', $incomeChange);
-
-        AnalyticsMonthly::where('user_id', $userId)
-            ->where('year', $year)
-            ->where('month', $month)
-            ->increment('expense', $expenseChange);
+        AnalyticsMonthly::upsert(
+            [
+                'user_id' => $userId,
+                'year' => $year,
+                'month' => $month,
+                'income' => $incomeChange,
+                'expense' => $expenseChange,
+            ],
+            ['user_id', 'year', 'month'],
+            [
+                'income' => DB::raw("analytics_monthly.income + $incomeChange"),
+                'expense' => DB::raw("analytics_monthly.expense + $expenseChange"),
+            ]
+        );
     }
 
     private function updateYearly(int $userId, int $year, float $incomeChange, float $expenseChange): void
     {
-        AnalyticsYearly::updateOrCreate(
-            ['user_id' => $userId, 'year' => $year],
-            ['income' => 0, 'expense' => 0]
-        )->increment('income', $incomeChange);
-
-        AnalyticsYearly::where('user_id', $userId)
-            ->where('year', $year)
-            ->increment('expense', $expenseChange);
+        AnalyticsYearly::upsert(
+            [
+                'user_id' => $userId,
+                'year' => $year,
+                'income' => $incomeChange,
+                'expense' => $expenseChange,
+            ],
+            ['user_id', 'year'],
+            [
+                'income' => DB::raw("analytics_yearly.income + $incomeChange"),
+                'expense' => DB::raw("analytics_yearly.expense + $expenseChange"),
+            ]
+        );
     }
 
     private function updateAccountDaily(int $userId, int $accountId, \Carbon\Carbon $date, float $incomeChange, float $expenseChange): void
     {
-        AnalyticsAccountDaily::updateOrCreate(
-            ['user_id' => $userId, 'account_id' => $accountId, 'date' => $date->toDateString()],
-            ['income' => 0, 'expense' => 0]
-        )->increment('income', $incomeChange);
+        $dateStr = $date->toDateString();
 
-        AnalyticsAccountDaily::where('user_id', $userId)
-            ->where('account_id', $accountId)
-            ->where('date', $date->toDateString())
-            ->increment('expense', $expenseChange);
+        AnalyticsAccountDaily::upsert(
+            [
+                'user_id' => $userId,
+                'account_id' => $accountId,
+                'date' => $dateStr,
+                'income' => $incomeChange,
+                'expense' => $expenseChange,
+            ],
+            ['user_id', 'account_id', 'date'],
+            [
+                'income' => DB::raw("analytics_account_daily.income + $incomeChange"),
+                'expense' => DB::raw("analytics_account_daily.expense + $expenseChange"),
+            ]
+        );
     }
 
     private function updateCategoryDaily(int $userId, int $categoryId, \Carbon\Carbon $date, float $amountChange): void
     {
-        AnalyticsCategoryDaily::updateOrCreate(
-            ['user_id' => $userId, 'category_id' => $categoryId, 'date' => $date->toDateString()],
-            ['amount' => 0]
-        )->increment('amount', $amountChange);
+        $dateStr = $date->toDateString();
+
+        AnalyticsCategoryDaily::upsert(
+            [
+                'user_id' => $userId,
+                'category_id' => $categoryId,
+                'date' => $dateStr,
+                'amount' => $amountChange,
+            ],
+            ['user_id', 'category_id', 'date'],
+            [
+                'amount' => DB::raw("analytics_category_daily.amount + $amountChange"),
+            ]
+        );
+    }
+
+    private function atomicUpdate(string $modelClass, array $keys, array $changes): void
+    {
+        $maxRetries = 5;
+
+        for ($attempt = 1; $attempt <= $maxRetries; $attempt++) {
+            try {
+                $existing = $modelClass::where($keys)->first();
+
+                if ($existing) {
+                    foreach ($changes as $field => $change) {
+                        $existing->$field += $change;
+                    }
+                    $existing->save();
+                } else {
+                    $modelClass::create(array_merge($keys, $changes));
+                }
+
+                return;
+            } catch (\Exception $e) {
+                if ($attempt === $maxRetries) {
+                    throw $e;
+                }
+                usleep(50000);
+            }
+        }
     }
 
     public function populateAll(User $user): void

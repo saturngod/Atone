@@ -59,7 +59,9 @@ composer run dev:ssr                # Dev with SSR enabled
 - Use Inertia `<Link>` for navigation, not `<a>` tags
 - Use Inertia `<Form>` component for forms
 - Use `axios` for API calls (handles CSRF tokens automatically with cookies)
+- Don't add custom close buttons in dialogs (shadcn/ui Dialog components have built-in close buttons)
 - Follow existing component patterns in `resources/js/components/ui/`
+- **Always verify route files are complete after writing** - check that all exports exist and TypeScript types pass
 
 ### Tailwind CSS v4
 

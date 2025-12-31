@@ -17,6 +17,7 @@ return new class extends Migration
             $table->foreignId('category_id')->nullable()->constrained()->nullOnDelete();
             $table->decimal('amount', 10, 2);
             $table->string('description')->nullable();
+            $table->string('merchant')->nullable();
             $table->date('date')->default(today());
             $table->timestamps();
         });

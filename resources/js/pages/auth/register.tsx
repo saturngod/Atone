@@ -15,19 +15,23 @@ interface RegisterFormData {
     method: 'get' | 'post' | 'put' | 'patch' | 'delete';
 }
 
+const loadRegisterRoute = async (): Promise<RegisterFormData> => {
+    const routePath = './../routes/register';
+    const registerModule = await import(/* @vite-ignore */ routePath);
+    const form = registerModule.store?.form?.() as RegisterFormData | undefined;
+    if (form) {
+        return form;
+    }
+    return { action: '/register', method: 'post' };
+};
+
 export default function Register() {
     const [formData, setFormData] = useState<RegisterFormData | null>(null);
 
     const loadForm = useCallback(async () => {
         try {
-            // @ts-expect-error - Module may not exist when registration is disabled
-            const registerModule = await import('@/routes/register');
-            const form = registerModule.store?.form?.() as
-                | RegisterFormData
-                | undefined;
-            if (form) {
-                setFormData(form);
-            }
+            const data = await loadRegisterRoute();
+            setFormData(data);
         } catch {
             setFormData({ action: '/register', method: 'post' });
         }

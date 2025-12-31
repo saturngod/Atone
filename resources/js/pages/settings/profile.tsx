@@ -10,9 +10,38 @@ import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import AppLayout from '@/layouts/app-layout';
 import SettingsLayout from '@/layouts/settings/layout';
 import { edit } from '@/routes/profile';
+
+const TIMEZONES = [
+    'UTC',
+    'America/New_York',
+    'America/Chicago',
+    'America/Denver',
+    'America/Los_Angeles',
+    'America/Anchorage',
+    'Pacific/Honolulu',
+    'Europe/London',
+    'Europe/Paris',
+    'Europe/Berlin',
+    'Europe/Moscow',
+    'Asia/Dubai',
+    'Asia/Kolkata',
+    'Asia/Bangkok',
+    'Asia/Singapore',
+    'Asia/Tokyo',
+    'Asia/Shanghai',
+    'Australia/Sydney',
+    'Pacific/Auckland',
+];
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -29,6 +58,7 @@ export default function Profile({
     status?: string;
 }) {
     const { auth } = usePage<SharedData>().props;
+    const userTimezone = (auth.user.timezone as string) || 'UTC';
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -86,6 +116,36 @@ export default function Profile({
                                     <InputError
                                         className="mt-2"
                                         message={errors.email}
+                                    />
+                                </div>
+
+                                <div className="grid gap-2">
+                                    <Label htmlFor="timezone">Timezone</Label>
+
+                                    <Select
+                                        name="timezone"
+                                        defaultValue={userTimezone}
+                                    >
+                                        <SelectTrigger className="mt-1 w-full">
+                                            <SelectValue placeholder="Select timezone" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {TIMEZONES.map((tz) => (
+                                                <SelectItem key={tz} value={tz}>
+                                                    {tz}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+
+                                    <p className="mt-1 text-xs text-muted-foreground">
+                                        Used for displaying dates in your local
+                                        time
+                                    </p>
+
+                                    <InputError
+                                        className="mt-2"
+                                        message={errors.timezone}
                                     />
                                 </div>
 

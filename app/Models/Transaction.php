@@ -14,13 +14,13 @@ class Transaction extends Model
     /** @use HasFactory<\Database\Factories\TransactionFactory> */
     use HasFactory;
 
-    protected $fillable = ['user_id', 'account_id', 'category_id', 'amount', 'description', 'date'];
+    protected $fillable = ['user_id', 'account_id', 'category_id', 'merchant_id', 'amount', 'description', 'date'];
 
     protected function casts(): array
     {
         return [
             'amount' => 'decimal:2',
-            'date' => 'date',
+            'date' => 'date:Y-m-d',
         ];
     }
 
@@ -39,6 +39,11 @@ class Transaction extends Model
         return $this->belongsTo(Category::class);
     }
 
+    public function merchant(): BelongsTo
+    {
+        return $this->belongsTo(Merchant::class);
+    }
+
     public static function createFromAIPrompt(User $user, string $prompt): Transaction
     {
         $openai = app(OpenAIService::class);
@@ -53,10 +58,18 @@ class Transaction extends Model
             ['user_id' => $user->id, 'name' => $parsed['category_name']]
         );
 
+        $merchant = null;
+        if (! empty($parsed['merchant_name'])) {
+            $merchant = Merchant::firstOrCreate(
+                ['user_id' => $user->id, 'name' => $parsed['merchant_name']]
+            );
+        }
+
         return Transaction::create([
             'user_id' => $user->id,
             'account_id' => $account->id,
             'category_id' => $category->id,
+            'merchant_id' => $merchant?->id,
             'amount' => $parsed['amount'],
             'description' => $parsed['description'],
             'date' => $parsed['date'],

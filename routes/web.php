@@ -39,6 +39,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('/{transaction}', [TransactionController::class, 'destroy'])->name('destroy');
     });
 
+    Route::post('ai', [AIController::class, 'handle'])->name('ai');
     Route::post('ai/transaction', [AIController::class, 'createTransaction'])->name('ai.transaction');
 });
 

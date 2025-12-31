@@ -6,6 +6,7 @@ import {
     ChartTooltip,
     ChartTooltipContent,
 } from '@/components/ui/chart';
+import { useTimezone } from '@/hooks/use-timezone';
 import AppLayout from '@/layouts/app-layout';
 import { dashboard } from '@/routes';
 import { type BreadcrumbItem } from '@/types';
@@ -87,6 +88,16 @@ function isIncome(amount: string | number): boolean {
     return toNumber(amount) >= 0;
 }
 
+function formatDateForDisplay(dateStr: string): string {
+    const date = new Date(dateStr + 'T00:00:00');
+    return date.toLocaleDateString('en-US', {
+        timeZone: undefined,
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+    });
+}
+
 const breadcrumbs: BreadcrumbItem[] = [
     {
         title: 'Dashboard',
@@ -103,8 +114,21 @@ export default function Dashboard({
     trend,
     recentTransactions,
 }: PageProps) {
+    const timezone = useTimezone();
+
+    function formatDateForDisplay(dateStr: string): string {
+        const date = new Date(dateStr + 'T00:00:00');
+        return date.toLocaleDateString('en-US', {
+            timeZone: timezone,
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric',
+        });
+    }
+
     const chartData = trend.map((item) => ({
-        date: new Date(item.date).toLocaleDateString('en-US', {
+        date: new Date(item.date + 'T00:00:00').toLocaleDateString('en-US', {
+            timeZone: timezone,
             month: 'short',
             day: 'numeric',
         }),
@@ -126,7 +150,7 @@ export default function Dashboard({
                                 className="hidden md:flex"
                             >
                                 <Bot className="mr-2 h-4 w-4" />
-                                Add with AI
+                                AI Assistant
                             </Button>
                         </AIChatDialog>
                     </div>
@@ -475,9 +499,9 @@ export default function Dashboard({
                                                     )}
                                                 </span>
                                                 <p className="text-xs text-muted-foreground">
-                                                    {new Date(
+                                                    {formatDateForDisplay(
                                                         transaction.date,
-                                                    ).toLocaleDateString()}
+                                                    )}
                                                 </p>
                                             </div>
                                         </div>

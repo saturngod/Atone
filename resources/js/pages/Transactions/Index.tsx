@@ -25,6 +25,7 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
+import { useTimezone } from '@/hooks/use-timezone';
 import AppLayout from '@/layouts/app-layout';
 import transactions from '@/routes/transactions';
 import { type BreadcrumbItem } from '@/types';
@@ -86,11 +87,27 @@ function isIncome(amount: string | number): boolean {
     return toNumber(amount) >= 0;
 }
 
+function formatDateForDisplay(dateStr: string): string {
+    const date = new Date(dateStr + 'T00:00:00');
+    return date.toLocaleDateString('en-US', {
+        timeZone: undefined,
+    });
+}
+
 export default function TransactionsIndex({
     transactions: transactionsList,
     accounts,
     categories,
 }: PageProps) {
+    const timezone = useTimezone();
+
+    function formatDateForDisplay(dateStr: string): string {
+        const date = new Date(dateStr + 'T00:00:00');
+        return date.toLocaleDateString('en-US', {
+            timeZone: timezone,
+        });
+    }
+
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
     const [editingTransaction, setEditingTransaction] =
         useState<Transaction | null>(null);
@@ -144,12 +161,15 @@ export default function TransactionsIndex({
 
     const handleEdit = (transaction: Transaction) => {
         setEditingTransaction(transaction);
+        const dateValue = transaction.date
+            ? new Date(transaction.date).toISOString().split('T')[0]
+            : '';
         editForm.setData({
             account_id: transaction.account?.id.toString() || '',
             category_id: transaction.category?.id.toString() || '',
             amount: transaction.amount.toString(),
             description: transaction.description || '',
-            date: transaction.date,
+            date: dateValue,
         });
         setIsEditDialogOpen(true);
     };
@@ -204,7 +224,7 @@ export default function TransactionsIndex({
                                 className="hidden md:flex"
                             >
                                 <Bot className="mr-2 h-4 w-4" />
-                                Add with AI
+                                AI Assistant
                             </Button>
                         </AIChatDialog>
                     </div>
@@ -323,9 +343,9 @@ export default function TransactionsIndex({
                                                         key={transaction.id}
                                                     >
                                                         <TableCell className="whitespace-nowrap">
-                                                            {new Date(
+                                                            {formatDateForDisplay(
                                                                 transaction.date,
-                                                            ).toLocaleDateString()}
+                                                            )}
                                                         </TableCell>
                                                         <TableCell>
                                                             {transaction.description || (
