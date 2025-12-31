@@ -1,4 +1,5 @@
 import TransactionForm from '@/components/TransactionForm';
+import { AIChatDialog } from '@/components/ai-chat-dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -28,7 +29,7 @@ import AppLayout from '@/layouts/app-layout';
 import transactions from '@/routes/transactions';
 import { type BreadcrumbItem } from '@/types';
 import { Head, useForm } from '@inertiajs/react';
-import { Pencil, Search, Trash2, X } from 'lucide-react';
+import { Bot, Pencil, Search, Trash2, X } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 interface Account {
@@ -193,7 +194,15 @@ export default function TransactionsIndex({
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Transactions" />
             <div className="container mx-auto max-w-6xl py-10">
-                <h1 className="mb-6 text-3xl font-bold">Transactions</h1>
+                <div className="mb-6 flex items-center justify-between">
+                    <h1 className="text-3xl font-bold">Transactions</h1>
+                    <AIChatDialog>
+                        <Button variant="outline" size="sm">
+                            <Bot className="mr-2 h-4 w-4" />
+                            Add with AI
+                        </Button>
+                    </AIChatDialog>
+                </div>
 
                 <TransactionForm accounts={accounts} categories={categories} />
 

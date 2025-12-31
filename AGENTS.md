@@ -58,6 +58,7 @@ composer run dev:ssr                # Dev with SSR enabled
 - Use `cn()` helper from `utils` for Tailwind class merging
 - Use Inertia `<Link>` for navigation, not `<a>` tags
 - Use Inertia `<Form>` component for forms
+- Use `axios` for API calls (handles CSRF tokens automatically with cookies)
 - Follow existing component patterns in `resources/js/components/ui/`
 
 ### Tailwind CSS v4

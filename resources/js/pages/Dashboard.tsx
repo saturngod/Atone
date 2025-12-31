@@ -1,3 +1,5 @@
+import { AIChatDialog } from '@/components/ai-chat-dialog';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
     ChartContainer,
@@ -8,7 +10,7 @@ import AppLayout from '@/layouts/app-layout';
 import { dashboard } from '@/routes';
 import { type BreadcrumbItem } from '@/types';
 import { Head } from '@inertiajs/react';
-import { TrendingDown, TrendingUp, Wallet } from 'lucide-react';
+import { Bot, TrendingDown, TrendingUp, Wallet } from 'lucide-react';
 import { Area, AreaChart, XAxis, YAxis } from 'recharts';
 
 interface Transaction {
@@ -114,7 +116,15 @@ export default function Dashboard({
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Dashboard" />
             <div className="container mx-auto max-w-5xl py-10">
-                <h1 className="mb-6 text-3xl font-bold">Dashboard</h1>
+                <div className="mb-6 flex items-center justify-between">
+                    <h1 className="text-3xl font-bold">Dashboard</h1>
+                    <AIChatDialog>
+                        <Button variant="outline" size="sm">
+                            <Bot className="mr-2 h-4 w-4" />
+                            Add with AI
+                        </Button>
+                    </AIChatDialog>
+                </div>
 
                 <div className="grid gap-4 md:grid-cols-3">
                     <Card>
