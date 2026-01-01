@@ -65,7 +65,17 @@ DB_USERNAME=root
 DB_PASSWORD=
 ```
 
-### 4. Run Development Servers
+### 4. Create User
+
+Create an admin user via command line:
+
+```bash
+php artisan make:user "John Doe" john@example.com password123
+```
+
+This creates a user with the specified name, email, and password. The password will be hashed automatically.
+
+### 5. Run Development Servers
 
 ```bash
 # Terminal 1: Laravel server
