@@ -7,30 +7,30 @@ namespace App\Http\Controllers;
 use App\Http\Requests\CategoryStoreRequest;
 use App\Http\Requests\CategoryUpdateRequest;
 use App\Models\Category;
+use App\Services\CategoryService;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use InvalidArgumentException;
 
 class CategoryController extends Controller
 {
     use AuthorizesRequests;
 
+    public function __construct(
+        private CategoryService $categoryService,
+    ) {}
+
     public function index(Request $request)
     {
-        $categories = $request->user()
-            ->categories()
-            ->withCount('transactions')
-            ->orderBy('name')
-            ->get();
-
         return Inertia::render('Categories/Index', [
-            'categories' => $categories,
+            'categories' => $this->categoryService->getCategoriesForUser($request->user()),
         ]);
     }
 
     public function store(CategoryStoreRequest $request)
     {
-        $category = $request->user()->categories()->create($request->validated());
+        $this->categoryService->createCategory($request->user(), $request->validated());
 
         return back()->with('success', 'Category created successfully.');
     }
@@ -38,8 +38,7 @@ class CategoryController extends Controller
     public function update(CategoryUpdateRequest $request, Category $category)
     {
         $this->authorize('update', $category);
-
-        $category->update($request->validated());
+        $this->categoryService->updateCategory($category, $request->validated());
 
         return back()->with('success', 'Category updated successfully.');
     }
@@ -48,11 +47,11 @@ class CategoryController extends Controller
     {
         $this->authorize('delete', $category);
 
-        if ($category->transactions()->exists()) {
-            return back()->with('error', 'Cannot delete category with transactions.');
+        try {
+            $this->categoryService->deleteCategory($category);
+        } catch (InvalidArgumentException $e) {
+            return back()->with('error', $e->getMessage());
         }
-
-        $category->delete();
 
         return back()->with('success', 'Category deleted successfully.');
     }

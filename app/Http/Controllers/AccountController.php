@@ -7,29 +7,30 @@ namespace App\Http\Controllers;
 use App\Http\Requests\AccountStoreRequest;
 use App\Http\Requests\AccountUpdateRequest;
 use App\Models\Account;
+use App\Services\AccountService;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use InvalidArgumentException;
 
 class AccountController extends Controller
 {
     use AuthorizesRequests;
 
+    public function __construct(
+        private AccountService $accountService,
+    ) {}
+
     public function index(Request $request)
     {
-        $accounts = $request->user()
-            ->accounts()
-            ->orderBy('name')
-            ->get();
-
         return Inertia::render('Accounts/Index', [
-            'accounts' => $accounts,
+            'accounts' => $this->accountService->getAccountsForUser($request->user()),
         ]);
     }
 
     public function store(AccountStoreRequest $request)
     {
-        $account = $request->user()->accounts()->create($request->validated());
+        $this->accountService->createAccount($request->user(), $request->validated());
 
         return back()->with('success', 'Account created successfully.');
     }
@@ -37,8 +38,7 @@ class AccountController extends Controller
     public function update(AccountUpdateRequest $request, Account $account)
     {
         $this->authorize('update', $account);
-
-        $account->update($request->validated());
+        $this->accountService->updateAccount($account, $request->validated());
 
         return back()->with('success', 'Account updated successfully.');
     }
@@ -47,11 +47,11 @@ class AccountController extends Controller
     {
         $this->authorize('delete', $account);
 
-        if ($account->transactions()->exists()) {
-            return back()->with('error', 'Cannot delete account with transactions.');
+        try {
+            $this->accountService->deleteAccount($account);
+        } catch (InvalidArgumentException $e) {
+            return back()->with('error', $e->getMessage());
         }
-
-        $account->delete();
 
         return back()->with('success', 'Account deleted successfully.');
     }
