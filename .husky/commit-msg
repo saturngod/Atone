@@ -1,0 +1,29 @@
+#!/bin/bash
+
+# Commit-msg hook for Personal Finance App
+# Validates commit messages follow conventional commit format
+
+echo "🔍 Validating commit message..."
+
+npx --no -- commitlint --edit $1
+
+if [ $? -ne 0 ]; then
+    echo ""
+    echo "❌ Commit message validation failed."
+    echo ""
+    echo "Please use one of the following types:"
+    echo "  feat:     Introduces a new feature"
+    echo "  fix:      Patches a bug"
+    echo "  docs:     Documentation-only changes"
+    echo "  style:    Changes that do not affect the meaning of the code"
+    echo "  refactor: A code change that neither fixes a bug nor adds a feature"
+    echo "  perf:     Improves performance"
+    echo "  test:     Adds missing tests or corrects existing tests"
+    echo "  chore:    Changes to the build process or auxiliary tools"
+    echo ""
+    echo "Example: feat: add user authentication"
+    exit 1
+fi
+
+echo "✅ Commit message validation passed!"
+exit 0
