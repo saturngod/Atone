@@ -11,6 +11,8 @@ use App\Models\AnalyticsMonthly;
 use App\Models\AnalyticsYearly;
 use App\Models\Transaction;
 use App\Models\User;
+use Carbon\Carbon;
+use Exception;
 use Illuminate\Support\Facades\DB;
 
 class AnalyticsService
@@ -30,7 +32,7 @@ class AnalyticsService
 
     public function applyTransaction(Transaction $transaction): void
     {
-        $date = \Carbon\Carbon::parse($transaction->date);
+        $date = Carbon::parse($transaction->date);
         $isIncome = $transaction->amount >= 0;
         $amount = abs((float) $transaction->amount);
         $userId = $transaction->user_id;
@@ -50,7 +52,7 @@ class AnalyticsService
 
     public function revertTransaction(Transaction $transaction): void
     {
-        $date = \Carbon\Carbon::parse($transaction->date);
+        $date = Carbon::parse($transaction->date);
         $isIncome = $transaction->amount >= 0;
         $amount = abs((float) $transaction->amount);
         $userId = $transaction->user_id;
@@ -68,7 +70,7 @@ class AnalyticsService
         }
     }
 
-    private function updateDaily(int $userId, \Carbon\Carbon $date, float $incomeChange, float $expenseChange): void
+    private function updateDaily(int $userId, Carbon $date, float $incomeChange, float $expenseChange): void
     {
         $dateStr = $date->toDateString();
 
@@ -122,7 +124,7 @@ class AnalyticsService
         );
     }
 
-    private function updateAccountDaily(int $userId, int $accountId, \Carbon\Carbon $date, float $incomeChange, float $expenseChange): void
+    private function updateAccountDaily(int $userId, int $accountId, Carbon $date, float $incomeChange, float $expenseChange): void
     {
         $dateStr = $date->toDateString();
 
@@ -142,7 +144,7 @@ class AnalyticsService
         );
     }
 
-    private function updateCategoryDaily(int $userId, int $categoryId, \Carbon\Carbon $date, float $amountChange): void
+    private function updateCategoryDaily(int $userId, int $categoryId, Carbon $date, float $amountChange): void
     {
         $dateStr = $date->toDateString();
 
@@ -178,7 +180,7 @@ class AnalyticsService
                 }
 
                 return;
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 if ($attempt === $maxRetries) {
                     throw $e;
                 }

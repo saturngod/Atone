@@ -38,7 +38,10 @@ export default function Register() {
     }, []);
 
     useEffect(() => {
-        loadForm();
+        const initForm = async () => {
+            await loadForm();
+        };
+        initForm();
     }, [loadForm]);
 
     if (!formData) {

@@ -13,6 +13,7 @@ class Account extends Model
 {
     /** @use HasFactory<\Database\Factories\AccountFactory> */
     use HasFactory;
+
     protected $fillable = ['user_id', 'name', 'color'];
 
     public function user(): BelongsTo

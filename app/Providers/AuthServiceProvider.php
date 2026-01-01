@@ -2,14 +2,20 @@
 
 namespace App\Providers;
 
+use App\Models\Account;
+use App\Models\Category;
+use App\Models\Transaction;
+use App\Policies\AccountPolicy;
+use App\Policies\CategoryPolicy;
+use App\Policies\TransactionPolicy;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 
 class AuthServiceProvider extends ServiceProvider
 {
     protected $policies = [
-        \App\Models\Account::class => \App\Policies\AccountPolicy::class,
-        \App\Models\Category::class => \App\Policies\CategoryPolicy::class,
-        \App\Models\Transaction::class => \App\Policies\TransactionPolicy::class,
+        Account::class => AccountPolicy::class,
+        Category::class => CategoryPolicy::class,
+        Transaction::class => TransactionPolicy::class,
     ];
 
     public function boot(): void

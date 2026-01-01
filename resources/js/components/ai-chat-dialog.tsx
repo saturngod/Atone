@@ -110,7 +110,7 @@ export function AIChatDialog({ children }: AIChatDialogProps) {
         setResult(null);
 
         try {
-            const url = ai.index?.url?.() || '/ai';
+            const url = ai.transaction?.url?.() || '/ai/transaction';
             const response = await axios.post(url, {
                 prompt,
             });
@@ -507,7 +507,7 @@ export function AIChatFAB() {
         setResult(null);
 
         try {
-            const url = ai.index?.url?.() || '/ai';
+            const url = ai.transaction?.url?.() || '/ai/transaction';
             const response = await axios.post(url, {
                 prompt,
             });

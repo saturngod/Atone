@@ -1,0 +1,41 @@
+#!/bin/bash
+
+# Pre-commit hook for Personal Finance App
+# Runs linting, formatting, and type checks before commit
+
+echo "🔍 Running pre-commit checks..."
+
+# Get the project root directory (where .git is located)
+PROJECT_ROOT="$(git rev-parse --show-toplevel)"
+cd "$PROJECT_ROOT"
+
+# Check PHP formatting
+echo "📝 Checking PHP formatting..."
+if ! vendor/bin/pint --dirty -v; then
+    echo "❌ PHP formatting check failed. Please fix with: vendor/bin pint --dirty"
+    exit 1
+fi
+
+# Check JavaScript formatting
+echo "📝 Checking JavaScript formatting..."
+if ! npm run format:check 2>&1; then
+    echo "❌ JavaScript formatting check failed. Please fix with: npm run format"
+    exit 1
+fi
+
+# Check JavaScript linting
+echo "🔎 Running JavaScript linting..."
+if ! npm run lint 2>&1; then
+    echo "❌ JavaScript linting failed. Please fix the errors above."
+    exit 1
+fi
+
+# Check TypeScript types
+echo "📐 Checking TypeScript types..."
+if ! npm run types 2>&1; then
+    echo "❌ TypeScript type check failed. Please fix the type errors above."
+    exit 1
+fi
+
+echo "✅ All pre-commit checks passed!"
+exit 0

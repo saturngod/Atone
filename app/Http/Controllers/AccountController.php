@@ -14,6 +14,7 @@ use Inertia\Inertia;
 class AccountController extends Controller
 {
     use AuthorizesRequests;
+
     public function index(Request $request)
     {
         $accounts = $request->user()

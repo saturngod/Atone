@@ -14,14 +14,7 @@ import { dashboard } from '@/routes';
 import transactions from '@/routes/transactions';
 import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
-import {
-    BookOpen,
-    CreditCard,
-    Folder,
-    LayoutGrid,
-    Tag,
-    Wallet,
-} from 'lucide-react';
+import { CreditCard, LayoutGrid, Tag, Wallet } from 'lucide-react';
 import AppLogo from './app-logo';
 
 const mainNavItems: NavItem[] = [
@@ -47,9 +40,7 @@ const mainNavItems: NavItem[] = [
     },
 ];
 
-const footerNavItems: NavItem[] = [
-
-];
+const footerNavItems: NavItem[] = [];
 
 export function AppSidebar() {
     return (
