@@ -6,7 +6,7 @@ import {
     DialogTrigger,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import ai from '@/routes/ai';
+import { ai } from '@/routes';
 import axios from 'axios';
 import {
     ArrowDownCircle,
@@ -16,12 +16,28 @@ import {
     Mic,
     Send,
     Sparkles,
+    User,
     Wallet,
 } from 'lucide-react';
 import { useState } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 interface AIChatDialogProps {
     children?: React.ReactNode;
+}
+
+interface Message {
+    role: 'user' | 'assistant' | 'system' | 'tool';
+    content: string | null;
+    tool_calls?: Array<{
+        id: string;
+        type: string;
+        function: {
+            name: string;
+            arguments: string;
+        };
+    }>;
 }
 
 interface TransactionResult {
@@ -70,6 +86,7 @@ interface ResponseData {
     total_balance?: number;
     total_income?: number;
     total_expense?: number;
+    assistant_message?: Message;
 }
 
 function formatCurrency(amount: number): string {
@@ -100,25 +117,43 @@ export function AIChatDialog({ children }: AIChatDialogProps) {
     const [isProcessing, setIsProcessing] = useState(false);
     const [result, setResult] = useState<ResponseData | null>(null);
     const [error, setError] = useState<string | null>(null);
+    const [messages, setMessages] = useState<Message[]>([]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!prompt.trim() || isProcessing) return;
+
+        // Add user message to history
+        const userMessage: Message = { role: 'user', content: prompt };
+        const newMessages = [...messages, userMessage];
+        setMessages(newMessages);
 
         setIsProcessing(true);
         setError(null);
         setResult(null);
 
         try {
-            const url = ai.transaction?.url?.() || '/ai/transaction';
+            const url = ai.url?.() || '/ai';
             const response = await axios.post(url, {
                 prompt,
+                messages: newMessages,
             });
+
+            // Add assistant message to history
+            if (response.data.assistant_message) {
+                const updatedMessages = [
+                    ...newMessages,
+                    response.data.assistant_message,
+                ];
+                setMessages(updatedMessages);
+            }
 
             setResult(response.data);
             setPrompt('');
         } catch (err) {
             setError(err instanceof Error ? err.message : 'An error occurred');
+            // Remove the user message if request failed
+            setMessages(messages);
         } finally {
             setIsProcessing(false);
         }
@@ -130,6 +165,7 @@ export function AIChatDialog({ children }: AIChatDialogProps) {
             setPrompt('');
             setResult(null);
             setError(null);
+            setMessages([]);
         }
     };
 
@@ -137,6 +173,9 @@ export function AIChatDialog({ children }: AIChatDialogProps) {
         setResult(null);
         setPrompt('');
     };
+
+    // Don't show AIResult for chat type since message is already in chat history
+    const showResult = result && result.type !== 'chat';
 
     return (
         <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -162,12 +201,64 @@ export function AIChatDialog({ children }: AIChatDialogProps) {
                     </div>
 
                     <div className="flex-1 space-y-4 overflow-y-auto bg-white p-4 dark:bg-black">
-                        {result ? (
+                        {/* Chat history */}
+                        {messages.length > 0 && (
+                            <div className="space-y-3">
+                                {messages.map((msg, index) => (
+                                    <div
+                                        key={index}
+                                        className={`flex gap-3 ${
+                                            msg.role === 'user'
+                                                ? 'justify-end'
+                                                : 'justify-start'
+                                        }`}
+                                    >
+                                        {msg.role === 'assistant' && (
+                                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                                                <Bot className="h-4 w-4 text-primary" />
+                                            </div>
+                                        )}
+                                        <div
+                                            className={`max-w-[80%] rounded-lg px-3 py-2 ${
+                                                msg.role === 'user'
+                                                    ? 'bg-primary text-primary-foreground'
+                                                    : 'bg-muted/50'
+                                            }`}
+                                        >
+                                            {msg.role === 'assistant' &&
+                                            msg.tool_calls &&
+                                            msg.tool_calls.length > 0 ? (
+                                                <span className="text-sm text-muted-foreground">
+                                                    🛠 Processing...
+                                                </span>
+                                            ) : msg.content ? (
+                                                <div className="prose prose-sm dark:prose-invert max-w-none">
+                                                    <ReactMarkdown
+                                                        remarkPlugins={[
+                                                            remarkGfm,
+                                                        ]}
+                                                    >
+                                                        {msg.content}
+                                                    </ReactMarkdown>
+                                                </div>
+                                            ) : null}
+                                        </div>
+                                        {msg.role === 'user' && (
+                                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary">
+                                                <User className="h-4 w-4 text-primary-foreground" />
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        {showResult ? (
                             <AIResult
                                 result={result}
                                 onNewQuery={resetAndNew}
                             />
-                        ) : (
+                        ) : messages.length === 0 ? (
                             <>
                                 <div className="space-y-3 rounded-xl bg-muted/50 p-4">
                                     <p className="text-xs font-medium tracking-wider text-muted-foreground uppercase">
@@ -189,7 +280,7 @@ export function AIChatDialog({ children }: AIChatDialogProps) {
                                     </div>
                                 </div>
                             </>
-                        )}
+                        ) : null}
 
                         {error && (
                             <div className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
@@ -464,16 +555,8 @@ function AIResult({
             );
 
         case 'chat':
-            return (
-                <div className="space-y-4">
-                    <div className="rounded-lg bg-muted/50 p-4">
-                        <p className="text-sm">{result.message}</p>
-                    </div>
-                    <Button onClick={onNewQuery} variant="outline" size="sm">
-                        Ask Another Question
-                    </Button>
-                </div>
-            );
+            // This should not be shown as it's already in the message history
+            return null;
 
         default:
             return (
@@ -497,25 +580,43 @@ export function AIChatFAB() {
     const [isProcessing, setIsProcessing] = useState(false);
     const [result, setResult] = useState<ResponseData | null>(null);
     const [error, setError] = useState<string | null>(null);
+    const [messages, setMessages] = useState<Message[]>([]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!prompt.trim() || isProcessing) return;
+
+        // Add user message to history
+        const userMessage: Message = { role: 'user', content: prompt };
+        const newMessages = [...messages, userMessage];
+        setMessages(newMessages);
 
         setIsProcessing(true);
         setError(null);
         setResult(null);
 
         try {
-            const url = ai.transaction?.url?.() || '/ai/transaction';
+            const url = ai.url?.() || '/ai';
             const response = await axios.post(url, {
                 prompt,
+                messages: newMessages,
             });
+
+            // Add assistant message to history
+            if (response.data.assistant_message) {
+                const updatedMessages = [
+                    ...newMessages,
+                    response.data.assistant_message,
+                ];
+                setMessages(updatedMessages);
+            }
 
             setResult(response.data);
             setPrompt('');
         } catch (err) {
             setError(err instanceof Error ? err.message : 'An error occurred');
+            // Remove the user message if request failed
+            setMessages(messages);
         } finally {
             setIsProcessing(false);
         }
@@ -527,6 +628,7 @@ export function AIChatFAB() {
             setPrompt('');
             setResult(null);
             setError(null);
+            setMessages([]);
         }
     };
 
@@ -534,6 +636,9 @@ export function AIChatFAB() {
         setResult(null);
         setPrompt('');
     };
+
+    // Don't show AIResult for chat type since message is already in chat history
+    const showResult = result && result.type !== 'chat';
 
     return (
         <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -563,12 +668,64 @@ export function AIChatFAB() {
                     </div>
 
                     <div className="flex-1 space-y-4 overflow-y-auto bg-white p-4 dark:bg-black">
-                        {result ? (
+                        {/* Chat history */}
+                        {messages.length > 0 && (
+                            <div className="space-y-3">
+                                {messages.map((msg, index) => (
+                                    <div
+                                        key={index}
+                                        className={`flex gap-3 ${
+                                            msg.role === 'user'
+                                                ? 'justify-end'
+                                                : 'justify-start'
+                                        }`}
+                                    >
+                                        {msg.role === 'assistant' && (
+                                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                                                <Bot className="h-4 w-4 text-primary" />
+                                            </div>
+                                        )}
+                                        <div
+                                            className={`max-w-[80%] rounded-lg px-3 py-2 ${
+                                                msg.role === 'user'
+                                                    ? 'bg-primary text-primary-foreground'
+                                                    : 'bg-muted/50'
+                                            }`}
+                                        >
+                                            {msg.role === 'assistant' &&
+                                            msg.tool_calls &&
+                                            msg.tool_calls.length > 0 ? (
+                                                <span className="text-sm text-muted-foreground">
+                                                    🛠 Processing...
+                                                </span>
+                                            ) : msg.content ? (
+                                                <div className="prose prose-sm dark:prose-invert max-w-none">
+                                                    <ReactMarkdown
+                                                        remarkPlugins={[
+                                                            remarkGfm,
+                                                        ]}
+                                                    >
+                                                        {msg.content}
+                                                    </ReactMarkdown>
+                                                </div>
+                                            ) : null}
+                                        </div>
+                                        {msg.role === 'user' && (
+                                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary">
+                                                <User className="h-4 w-4 text-primary-foreground" />
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        {showResult ? (
                             <AIResult
                                 result={result}
                                 onNewQuery={resetAndNew}
                             />
-                        ) : (
+                        ) : messages.length === 0 ? (
                             <>
                                 <div className="space-y-3 rounded-xl bg-muted/50 p-4">
                                     <p className="text-xs font-medium tracking-wider text-muted-foreground uppercase">
@@ -590,7 +747,7 @@ export function AIChatFAB() {
                                     </div>
                                 </div>
                             </>
-                        )}
+                        ) : null}
 
                         {error && (
                             <div className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
@@ -617,7 +774,7 @@ export function AIChatFAB() {
                                     type="button"
                                     variant="ghost"
                                     size="icon"
-                                    className="absolute top-1/2 right-1 h-8 w-8 -translate-y-1/2 text-muted-foreground"
+                                    className="absolute top-1/2 right-1 h-8 w-8 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                                 >
                                     <Mic className="h-4 w-4" />
                                 </Button>

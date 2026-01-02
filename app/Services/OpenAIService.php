@@ -72,17 +72,23 @@ class OpenAIService
         return $result;
     }
 
-    public function chatWithFunctions(string $prompt): array
+    public function chatWithFunctions(string $prompt, array $conversationHistory = []): array
     {
+        $messages = [
+            [
+                'role' => 'system',
+                'content' => 'You are a financial assistant that helps users manage their personal finances. Use the available functions to answer queries about transactions, spending, income, and balances. When providing numerical results, always format them clearly with currency symbols. '.
+                'IMPORTANT: When creating transactions (create_transaction function), you MUST have ALL required information before calling the function: account_name, category_name, amount, description, and date. '.
+                'If ANY of these fields are missing from the user\'s input, ask the user to provide the missing information. DO NOT make up or guess any values. '.
+                'Be conversational and friendly when asking for missing details. For example: "How much was the coffee?" or "What date was this purchase?" or "Which account should I use?"',
+            ],
+            ...$conversationHistory,
+            ['role' => 'user', 'content' => $prompt],
+        ];
+
         $payload = [
             'model' => $this->model,
-            'messages' => [
-                [
-                    'role' => 'system',
-                    'content' => 'You are a financial assistant that helps users manage their personal finances. Use the available functions to answer queries about transactions, spending, income, and balances. When providing numerical results, always format them clearly with currency symbols.',
-                ],
-                ['role' => 'user', 'content' => $prompt],
-            ],
+            'messages' => $messages,
             'tools' => $this->getFunctionSchemas(),
             'tool_choice' => 'auto',
         ];
@@ -105,12 +111,23 @@ class OpenAIService
             return [
                 'function' => $functionName,
                 'arguments' => $arguments,
+                'assistant_message' => [
+                    'role' => 'assistant',
+                    'content' => $message['content'] ?? '',
+                    'tool_calls' => $message['tool_calls'],
+                ],
             ];
         }
+
+        $assistantMessage = [
+            'role' => 'assistant',
+            'content' => $message['content'] ?? '',
+        ];
 
         return [
             'function' => 'chat',
             'arguments' => ['response' => $message['content'] ?? ''],
+            'assistant_message' => $assistantMessage,
         ];
     }
 
@@ -133,25 +150,28 @@ class OpenAIService
             'type' => 'function',
             'function' => [
                 'name' => 'create_transaction',
-                'description' => 'Create a new transaction from natural language description. Use this when the user wants to add a new expense or income entry.',
+                'description' => 'Create a new transaction from natural language description. Use this when the user wants to add a new expense or income entry. '.
+                    'CRITICAL: Only call this function when you have ALL required information from the user. '.
+                    'If the user provides incomplete information (missing amount, date, account, category, or description), ask them for the missing details first. '.
+                    'DO NOT make up or guess any values. The user must provide all information.',
                 'parameters' => [
                     'type' => 'object',
                     'properties' => [
                         'account_name' => [
                             'type' => 'string',
-                            'description' => 'The name of the account used for the transaction',
+                            'description' => 'The name of the account used for the transaction. Ask if user does not specify.',
                         ],
                         'category_name' => [
                             'type' => 'string',
-                            'description' => 'The name of the category for the transaction',
+                            'description' => 'The name of the category for the transaction. Ask if user does not specify.',
                         ],
                         'amount' => [
                             'type' => 'number',
-                            'description' => 'The transaction amount (positive for income, negative for expense)',
+                            'description' => 'The transaction amount (positive for income, negative for expense). Ask if user does not specify.',
                         ],
                         'description' => [
                             'type' => 'string',
-                            'description' => 'A brief description of the transaction',
+                            'description' => 'A brief description of the transaction. Use the user\'s description if provided.',
                         ],
                         'merchant_name' => [
                             'type' => ['string', 'null'],
@@ -159,7 +179,7 @@ class OpenAIService
                         ],
                         'date' => [
                             'type' => 'string',
-                            'description' => 'The date of the transaction in YYYY-MM-DD format',
+                            'description' => 'The date of the transaction in YYYY-MM-DD format. Use today\'s date if not specified by user.',
                         ],
                     ],
                     'required' => ['account_name', 'category_name', 'amount', 'description', 'date'],

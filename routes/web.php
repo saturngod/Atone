@@ -40,7 +40,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 
     Route::post('ai', [AIController::class, 'handle'])->name('ai');
-    Route::post('ai/transaction', [AIController::class, 'createTransaction'])->name('ai.transaction');
 });
 
 require __DIR__.'/settings.php';

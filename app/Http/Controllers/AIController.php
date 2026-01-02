@@ -20,16 +20,24 @@ class AIController extends Controller
     {
         $request->validate([
             'prompt' => ['required', 'string'],
+            'messages' => ['array', 'nullable'],
+            'messages.*.role' => ['required', 'in:system,user,assistant,tool'],
+            'messages.*.content' => ['nullable', 'string'],
+            'messages.*.tool_calls' => ['array', 'nullable'],
         ]);
 
-        $result = $this->openaiService->chatWithFunctions($request->input('prompt'));
+        $conversationHistory = $request->input('messages', []);
+        $prompt = $request->input('prompt');
+
+        $result = $this->openaiService->chatWithFunctions($prompt, $conversationHistory);
 
         $function = $result['function'];
         $arguments = $result['arguments'];
+        $assistantMessage = $result['assistant_message'] ?? null;
 
         $user = $request->user();
 
-        return match ($function) {
+        $response = match ($function) {
             'create_transaction' => $this->createTransaction($user, $arguments),
             'list_transactions' => $this->listTransactions($user, $arguments),
             'get_spending_summary' => $this->getSpendingSummary($user, $arguments),
@@ -40,6 +48,15 @@ class AIController extends Controller
             'chat' => $this->chatResponse($arguments['response'] ?? ''),
             default => response()->json(['error' => 'Unknown function: '.$function], 400),
         };
+
+        // Add the assistant's message to the response for frontend to store
+        if ($assistantMessage && $response->status() === 200) {
+            $data = $response->getData(true);
+            $data['assistant_message'] = $assistantMessage;
+            $response->setData($data);
+        }
+
+        return $response;
     }
 
     private function createTransaction($user, array $arguments): JsonResponse
