@@ -29,7 +29,8 @@ class AIController extends Controller
         $conversationHistory = $request->input('messages', []);
         $prompt = $request->input('prompt');
 
-        $result = $this->openaiService->chatWithFunctions($prompt, $conversationHistory);
+        $user = $request->user();
+        $result = $this->openaiService->chatWithFunctions($user, $prompt, $conversationHistory);
 
         $function = $result['function'];
         $arguments = $result['arguments'];

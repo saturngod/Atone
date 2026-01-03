@@ -33,12 +33,14 @@ class OpenAIService
             $accountContext = "User has these accounts:\n$accountContext\nIf account is mentioned, use its currency logic.";
         }
 
+        $timeContext = $this->getTimeContext($user);
+
         $payload = [
             'model' => $this->model,
             'messages' => [
                 [
                     'role' => 'system',
-                    'content' => 'You are a financial transaction assistant. Extract transaction details from natural language and output ONLY valid JSON. Output format: {"account_name": "string", "category_name": "string", "amount": number, "description": "string", "merchant_name": "string|null", "date": "YYYY-MM-DD", "currency": "string|null"}. Rules: - Use "Entertainment" for games, movies, streaming. - Use "Food & Dining" for restaurants, coffee, groceries. - Use "Income" for salary, deposits. - Amount negative for expenses, positive for income. - Date in YYYY-MM-DD format. - merchant_name: extract if mentioned, else null. - currency: Extract explicit currency code (e.g. USD, MMK) if mentioned (e.g. "500 MMK"), otherwise null. '.$accountContext,
+                    'content' => 'You are a financial transaction assistant. Extract transaction details from natural language and output ONLY valid JSON. Output format: {"account_name": "string", "category_name": "string", "amount": number, "description": "string", "merchant_name": "string|null", "date": "YYYY-MM-DD", "currency": "string|null"}. Rules: - Use "Entertainment" for games, movies, streaming. - Use "Food & Dining" for restaurants, coffee, groceries. - Use "Income" for salary, deposits. - Amount negative for expenses, positive for income. - Date in YYYY-MM-DD format. - merchant_name: extract if mentioned, else null. - currency: Extract explicit currency code (e.g. USD, MMK) if mentioned (e.g. "500 MMK"), otherwise null. '.$accountContext.' '.$timeContext,
                 ],
                 ['role' => 'user', 'content' => $prompt],
             ],
@@ -80,15 +82,17 @@ class OpenAIService
         return $result;
     }
 
-    public function chatWithFunctions(string $prompt, array $conversationHistory = []): array
+    public function chatWithFunctions(User $user, string $prompt, array $conversationHistory = []): array
     {
+        $timeContext = $this->getTimeContext($user);
+
         $messages = [
             [
                 'role' => 'system',
                 'content' => 'You are a financial assistant that helps users manage their personal finances. Use the available functions to answer queries about transactions, spending, income, and balances. When providing numerical results, always format them clearly with currency symbols. '.
                 'IMPORTANT: When creating transactions (create_transaction function), you MUST have ALL required information before calling the function: account_name, category_name, amount, description, and date. '.
                 'If ANY of these fields are missing from the user\'s input, ask the user to provide the missing information. DO NOT make up or guess any values. '.
-                'Be conversational and friendly when asking for missing details. For example: "How much was the coffee?" or "What date was this purchase?" or "Which account should I use?"',
+                'Be conversational and friendly when asking for missing details. For example: "How much was the coffee?" or "What date was this purchase?" or "Which account should I use?" '.$timeContext,
             ],
             ...$conversationHistory,
             ['role' => 'user', 'content' => $prompt],
@@ -137,6 +141,19 @@ class OpenAIService
             'arguments' => ['response' => $message['content'] ?? ''],
             'assistant_message' => $assistantMessage,
         ];
+    }
+
+    private function getTimeContext(User $user): string
+    {
+        $timezone = $user->timezone ?? 'UTC';
+        $now = now($timezone);
+
+        return sprintf(
+            'Current Date: %s. Current Time: %s. User Timezone: %s.',
+            $now->format('Y-m-d'),
+            $now->format('H:i:s'),
+            $timezone
+        );
     }
 
     private function getFunctionSchemas(): array
