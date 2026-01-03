@@ -14,7 +14,7 @@ class Account extends Model
     /** @use HasFactory<\Database\Factories\AccountFactory> */
     use HasFactory;
 
-    protected $fillable = ['user_id', 'name', 'color'];
+    protected $fillable = ['user_id', 'name', 'color', 'currency_code'];
 
     public function user(): BelongsTo
     {

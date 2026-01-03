@@ -6,11 +6,18 @@ import {
     ChartTooltip,
     ChartTooltipContent,
 } from '@/components/ui/chart';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import { useTimezone } from '@/hooks/use-timezone';
 import AppLayout from '@/layouts/app-layout';
 import { dashboard } from '@/routes';
 import { type BreadcrumbItem } from '@/types';
-import { Head } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
 import { Bot, TrendingDown, TrendingUp, Wallet } from 'lucide-react';
 import { Area, AreaChart, XAxis, YAxis } from 'recharts';
 
@@ -57,6 +64,8 @@ interface PageProps {
     byCategory: CategorySummary[];
     trend: TrendData[];
     recentTransactions: Transaction[];
+    currency: string;
+    availableCurrencies: string[];
 }
 
 const chartConfig = {
@@ -103,6 +112,8 @@ export default function Dashboard({
     byCategory,
     trend,
     recentTransactions,
+    currency,
+    availableCurrencies,
 }: PageProps) {
     const timezone = useTimezone();
 
@@ -133,16 +144,40 @@ export default function Dashboard({
                 <div className="container mx-auto max-w-5xl px-4 py-10 md:px-0">
                     <div className="mb-6 flex items-center justify-between">
                         <h1 className="text-3xl font-bold">Dashboard</h1>
-                        <AIChatDialog>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                className="hidden md:flex"
+                        <div className="flex items-center gap-2">
+                            <Select
+                                value={currency}
+                                onValueChange={(value) =>
+                                    router.visit(dashboard().url, {
+                                        data: { currency: value },
+                                        preserveState: true,
+                                        preserveScroll: true,
+                                        replace: true,
+                                    })
+                                }
                             >
-                                <Bot className="mr-2 h-4 w-4" />
-                                AI Assistant
-                            </Button>
-                        </AIChatDialog>
+                                <SelectTrigger className="w-[100px]">
+                                    <SelectValue placeholder="Currency" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {availableCurrencies.map((c) => (
+                                        <SelectItem key={c} value={c}>
+                                            {c}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                            <AIChatDialog>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="hidden md:flex"
+                                >
+                                    <Bot className="mr-2 h-4 w-4" />
+                                    AI Assistant
+                                </Button>
+                            </AIChatDialog>
+                        </div>
                     </div>
 
                     <div className="grid gap-4 md:grid-cols-3">

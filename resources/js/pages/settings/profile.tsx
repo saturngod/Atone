@@ -53,12 +53,15 @@ const breadcrumbs: BreadcrumbItem[] = [
 export default function Profile({
     mustVerifyEmail,
     status,
+    supported_currencies,
 }: {
     mustVerifyEmail: boolean;
     status?: string;
+    supported_currencies: string[];
 }) {
     const { auth } = usePage<SharedData>().props;
     const userTimezone = (auth.user.timezone as string) || 'UTC';
+    const userCurrency = (auth.user.currency_code as string) || 'USD';
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -146,6 +149,42 @@ export default function Profile({
                                     <InputError
                                         className="mt-2"
                                         message={errors.timezone}
+                                    />
+                                </div>
+
+                                <div className="grid gap-2">
+                                    <Label htmlFor="currency_code">
+                                        Currency
+                                    </Label>
+
+                                    <Select
+                                        name="currency_code"
+                                        defaultValue={userCurrency}
+                                    >
+                                        <SelectTrigger className="mt-1 w-full">
+                                            <SelectValue placeholder="Select currency" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {supported_currencies.map(
+                                                (code) => (
+                                                    <SelectItem
+                                                        key={code}
+                                                        value={code}
+                                                    >
+                                                        {code}
+                                                    </SelectItem>
+                                                ),
+                                            )}
+                                        </SelectContent>
+                                    </Select>
+
+                                    <p className="mt-1 text-xs text-muted-foreground">
+                                        Default currency for new accounts
+                                    </p>
+
+                                    <InputError
+                                        className="mt-2"
+                                        message={errors.currency_code}
                                     />
                                 </div>
 

@@ -6,6 +6,7 @@ namespace App\Services;
 
 use App\Exceptions\OpenAIRequestException;
 use App\Exceptions\OpenAIResponseException;
+use App\Models\User;
 use Illuminate\Support\Facades\Log;
 
 class OpenAIService
@@ -23,14 +24,21 @@ class OpenAIService
         $this->url = config('openai.url');
     }
 
-    public function parseTransactionPrompt(string $prompt): array
+    public function parseTransactionPrompt(User $user, string $prompt): array
     {
+        $accounts = $user->accounts()->get(['name', 'currency_code']);
+        $accountContext = $accounts->map(fn ($account) => "- {$account->name} ({$account->currency_code})")->join("\n");
+
+        if ($accountContext) {
+            $accountContext = "User has these accounts:\n$accountContext\nIf account is mentioned, use its currency logic.";
+        }
+
         $payload = [
             'model' => $this->model,
             'messages' => [
                 [
                     'role' => 'system',
-                    'content' => 'You are a financial transaction assistant. Extract transaction details from natural language and output ONLY valid JSON. Do not explain. Do not add markdown. Output format: {"account_name": "string", "category_name": "string", "amount": number, "description": "string", "merchant_name": "string|null", "date": "YYYY-MM-DD"}. Rules: - Use "Entertainment" for games, movies, streaming. - Use "Food & Dining" for restaurants, coffee, groceries. - Use "Income" for salary, deposits. - Amount negative for expenses, positive for income. - Date in YYYY-MM-DD format. Convert "yesterday" to actual date. - merchant_name: extract the store/merchant name if mentioned (e.g., "Starbucks", "Steam", "Apple"), otherwise null.',
+                    'content' => 'You are a financial transaction assistant. Extract transaction details from natural language and output ONLY valid JSON. Output format: {"account_name": "string", "category_name": "string", "amount": number, "description": "string", "merchant_name": "string|null", "date": "YYYY-MM-DD", "currency": "string|null"}. Rules: - Use "Entertainment" for games, movies, streaming. - Use "Food & Dining" for restaurants, coffee, groceries. - Use "Income" for salary, deposits. - Amount negative for expenses, positive for income. - Date in YYYY-MM-DD format. - merchant_name: extract if mentioned, else null. - currency: Extract explicit currency code (e.g. USD, MMK) if mentioned (e.g. "500 MMK"), otherwise null. '.$accountContext,
                 ],
                 ['role' => 'user', 'content' => $prompt],
             ],
@@ -56,7 +64,7 @@ class OpenAIService
             throw new OpenAIResponseException('Failed to decode JSON: '.json_last_error_msg());
         }
 
-        $requiredFields = ['account_name', 'category_name', 'amount', 'description', 'date'];
+        $requiredFields = ['account_name', 'category_name', 'amount', 'description', 'date', 'currency'];
         $missingFields = [];
 
         foreach ($requiredFields as $field) {

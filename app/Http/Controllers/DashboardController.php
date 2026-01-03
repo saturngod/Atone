@@ -16,6 +16,21 @@ class DashboardController extends Controller
 
     public function index(Request $request)
     {
-        return Inertia::render('Dashboard', $this->dashboardService->getDashboardData($request->user()));
+        $user = $request->user();
+        $currency = $request->input('currency') ?? $user->currency_code;
+
+        $availableCurrencies = $user->accounts()
+            ->select('currency_code')
+            ->distinct()
+            ->pluck('currency_code')
+            ->push($user->currency_code)
+            ->unique()
+            ->values();
+
+        return Inertia::render('Dashboard', [
+            'currency' => $currency,
+            'availableCurrencies' => $availableCurrencies,
+            ...$this->dashboardService->getDashboardData($user, $currency),
+        ]);
     }
 }

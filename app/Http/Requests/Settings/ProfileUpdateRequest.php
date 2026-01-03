@@ -30,6 +30,7 @@ class ProfileUpdateRequest extends FormRequest
             ],
 
             'timezone' => ['nullable', 'string', 'max:64'],
+            'currency_code' => ['sometimes', 'required', 'string', Rule::in(config('finance.currencies'))],
         ];
     }
 }

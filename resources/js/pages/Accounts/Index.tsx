@@ -9,10 +9,17 @@ import {
     DialogTrigger,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import AppLayout from '@/layouts/app-layout';
 import accounts from '@/routes/accounts';
 import { type BreadcrumbItem } from '@/types';
-import { Head, useForm } from '@inertiajs/react';
+import { Head, useForm, usePage } from '@inertiajs/react';
 import { Pencil, Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -20,10 +27,18 @@ interface Account {
     id: number;
     name: string;
     color: string;
+    currency_code: string;
 }
 
 interface PageProps {
     accounts: Account[];
+    auth: {
+        user: {
+            currency_code: string;
+        };
+    };
+    supported_currencies: string[];
+    [key: string]: unknown;
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -33,13 +48,18 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-export default function AccountsIndex({ accounts: accountsList }: PageProps) {
+export default function AccountsIndex({
+    accounts: accountsList,
+    supported_currencies,
+}: PageProps) {
+    const { auth } = usePage<PageProps>().props;
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [editingAccount, setEditingAccount] = useState<Account | null>(null);
 
     const form = useForm({
         name: '',
         color: '#3b82f6',
+        currency_code: auth.user.currency_code || 'USD',
     });
 
     const deleteForm = useForm({});
@@ -66,7 +86,11 @@ export default function AccountsIndex({ accounts: accountsList }: PageProps) {
 
     const handleEdit = (account: Account) => {
         setEditingAccount(account);
-        form.setData({ name: account.name, color: account.color });
+        form.setData({
+            name: account.name,
+            color: account.color,
+            currency_code: account.currency_code,
+        });
         setIsDialogOpen(true);
     };
 
@@ -121,6 +145,40 @@ export default function AccountsIndex({ accounts: accountsList }: PageProps) {
                                         placeholder="e.g., Wallet, Bank"
                                         required
                                     />
+                                </div>
+                                <div>
+                                    <label className="text-sm font-medium">
+                                        Currency
+                                    </label>
+                                    <Select
+                                        value={form.data.currency_code}
+                                        onValueChange={(value) =>
+                                            form.setData('currency_code', value)
+                                        }
+                                        disabled={!!editingAccount}
+                                    >
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Select currency" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {supported_currencies.map(
+                                                (code) => (
+                                                    <SelectItem
+                                                        key={code}
+                                                        value={code}
+                                                    >
+                                                        {code}
+                                                    </SelectItem>
+                                                ),
+                                            )}
+                                        </SelectContent>
+                                    </Select>
+                                    {editingAccount && (
+                                        <p className="text-xs text-muted-foreground">
+                                            Currency cannot be changed after
+                                            creation.
+                                        </p>
+                                    )}
                                 </div>
                                 <div>
                                     <label className="text-sm font-medium">

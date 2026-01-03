@@ -36,17 +36,18 @@ class AnalyticsService
         $isIncome = $transaction->amount >= 0;
         $amount = abs((float) $transaction->amount);
         $userId = $transaction->user_id;
+        $currency = $transaction->account->currency_code; // Account must exist and have currency
 
-        $this->updateDaily($userId, $date, $isIncome ? $amount : 0, $isIncome ? 0 : $amount);
-        $this->updateMonthly($userId, $date->year, $date->month, $isIncome ? $amount : 0, $isIncome ? 0 : $amount);
-        $this->updateYearly($userId, $date->year, $isIncome ? $amount : 0, $isIncome ? 0 : $amount);
+        $this->updateDaily($userId, $date, $currency, $isIncome ? $amount : 0, $isIncome ? 0 : $amount);
+        $this->updateMonthly($userId, $date->year, $date->month, $currency, $isIncome ? $amount : 0, $isIncome ? 0 : $amount);
+        $this->updateYearly($userId, $date->year, $currency, $isIncome ? $amount : 0, $isIncome ? 0 : $amount);
 
         if ($transaction->account_id) {
-            $this->updateAccountDaily($userId, $transaction->account_id, $date, $isIncome ? $amount : 0, $isIncome ? 0 : $amount);
+            $this->updateAccountDaily($userId, $transaction->account_id, $date, $currency, $isIncome ? $amount : 0, $isIncome ? 0 : $amount);
         }
 
         if ($transaction->category_id) {
-            $this->updateCategoryDaily($userId, $transaction->category_id, $date, $amount);
+            $this->updateCategoryDaily($userId, $transaction->category_id, $date, $currency, $amount);
         }
     }
 
@@ -56,21 +57,22 @@ class AnalyticsService
         $isIncome = $transaction->amount >= 0;
         $amount = abs((float) $transaction->amount);
         $userId = $transaction->user_id;
+        $currency = $transaction->account->currency_code;
 
-        $this->updateDaily($userId, $date, $isIncome ? -$amount : 0, $isIncome ? 0 : -$amount);
-        $this->updateMonthly($userId, $date->year, $date->month, $isIncome ? -$amount : 0, $isIncome ? 0 : -$amount);
-        $this->updateYearly($userId, $date->year, $isIncome ? -$amount : 0, $isIncome ? 0 : -$amount);
+        $this->updateDaily($userId, $date, $currency, $isIncome ? -$amount : 0, $isIncome ? 0 : -$amount);
+        $this->updateMonthly($userId, $date->year, $date->month, $currency, $isIncome ? -$amount : 0, $isIncome ? 0 : -$amount);
+        $this->updateYearly($userId, $date->year, $currency, $isIncome ? -$amount : 0, $isIncome ? 0 : -$amount);
 
         if ($transaction->account_id) {
-            $this->updateAccountDaily($userId, $transaction->account_id, $date, $isIncome ? -$amount : 0, $isIncome ? 0 : -$amount);
+            $this->updateAccountDaily($userId, $transaction->account_id, $date, $currency, $isIncome ? -$amount : 0, $isIncome ? 0 : -$amount);
         }
 
         if ($transaction->category_id) {
-            $this->updateCategoryDaily($userId, $transaction->category_id, $date, -$amount);
+            $this->updateCategoryDaily($userId, $transaction->category_id, $date, $currency, -$amount);
         }
     }
 
-    private function updateDaily(int $userId, Carbon $date, float $incomeChange, float $expenseChange): void
+    private function updateDaily(int $userId, Carbon $date, string $currency, float $incomeChange, float $expenseChange): void
     {
         $dateStr = $date->toDateString();
 
@@ -78,10 +80,11 @@ class AnalyticsService
             [
                 'user_id' => $userId,
                 'date' => $dateStr,
+                'currency' => $currency,
                 'income' => $incomeChange,
                 'expense' => $expenseChange,
             ],
-            ['user_id', 'date'],
+            ['user_id', 'date', 'currency'],
             [
                 'income' => DB::raw("analytics_daily.income + $incomeChange"),
                 'expense' => DB::raw("analytics_daily.expense + $expenseChange"),
@@ -89,17 +92,18 @@ class AnalyticsService
         );
     }
 
-    private function updateMonthly(int $userId, int $year, int $month, float $incomeChange, float $expenseChange): void
+    private function updateMonthly(int $userId, int $year, int $month, string $currency, float $incomeChange, float $expenseChange): void
     {
         AnalyticsMonthly::upsert(
             [
                 'user_id' => $userId,
                 'year' => $year,
                 'month' => $month,
+                'currency' => $currency,
                 'income' => $incomeChange,
                 'expense' => $expenseChange,
             ],
-            ['user_id', 'year', 'month'],
+            ['user_id', 'year', 'month', 'currency'],
             [
                 'income' => DB::raw("analytics_monthly.income + $incomeChange"),
                 'expense' => DB::raw("analytics_monthly.expense + $expenseChange"),
@@ -107,16 +111,17 @@ class AnalyticsService
         );
     }
 
-    private function updateYearly(int $userId, int $year, float $incomeChange, float $expenseChange): void
+    private function updateYearly(int $userId, int $year, string $currency, float $incomeChange, float $expenseChange): void
     {
         AnalyticsYearly::upsert(
             [
                 'user_id' => $userId,
                 'year' => $year,
+                'currency' => $currency,
                 'income' => $incomeChange,
                 'expense' => $expenseChange,
             ],
-            ['user_id', 'year'],
+            ['user_id', 'year', 'currency'],
             [
                 'income' => DB::raw("analytics_yearly.income + $incomeChange"),
                 'expense' => DB::raw("analytics_yearly.expense + $expenseChange"),
@@ -124,7 +129,7 @@ class AnalyticsService
         );
     }
 
-    private function updateAccountDaily(int $userId, int $accountId, Carbon $date, float $incomeChange, float $expenseChange): void
+    private function updateAccountDaily(int $userId, int $accountId, Carbon $date, string $currency, float $incomeChange, float $expenseChange): void
     {
         $dateStr = $date->toDateString();
 
@@ -133,6 +138,7 @@ class AnalyticsService
                 'user_id' => $userId,
                 'account_id' => $accountId,
                 'date' => $dateStr,
+                'currency' => $currency,
                 'income' => $incomeChange,
                 'expense' => $expenseChange,
             ],
@@ -144,7 +150,7 @@ class AnalyticsService
         );
     }
 
-    private function updateCategoryDaily(int $userId, int $categoryId, Carbon $date, float $amountChange): void
+    private function updateCategoryDaily(int $userId, int $categoryId, Carbon $date, string $currency, float $amountChange): void
     {
         $dateStr = $date->toDateString();
 
@@ -153,9 +159,10 @@ class AnalyticsService
                 'user_id' => $userId,
                 'category_id' => $categoryId,
                 'date' => $dateStr,
+                'currency' => $currency,
                 'amount' => $amountChange,
             ],
-            ['user_id', 'category_id', 'date'],
+            ['user_id', 'category_id', 'date', 'currency'],
             [
                 'amount' => DB::raw("analytics_category_daily.amount + $amountChange"),
             ]
@@ -200,7 +207,7 @@ class AnalyticsService
         }
     }
 
-    public function getDashboardData(User $user): array
+    public function getDashboardData(User $user, string $currency): array
     {
         $today = now()->toDateString();
         $startOfMonth = now()->startOfMonth()->toDateString();
@@ -208,19 +215,23 @@ class AnalyticsService
 
         $daily = AnalyticsDaily::where('user_id', $user->id)
             ->where('date', $today)
+            ->where('currency', $currency)
             ->first();
 
         $monthly = AnalyticsMonthly::where('user_id', $user->id)
             ->where('year', now()->year)
             ->where('month', now()->month)
+            ->where('currency', $currency)
             ->first();
 
         $yearly = AnalyticsYearly::where('user_id', $user->id)
             ->where('year', now()->year)
+            ->where('currency', $currency)
             ->first();
 
         $monthlyByAccount = AnalyticsAccountDaily::where('analytics_account_daily.user_id', $user->id)
             ->whereBetween('analytics_account_daily.date', [$startOfMonth, $today])
+            ->where('analytics_account_daily.currency', $currency)
             ->join('accounts', 'analytics_account_daily.account_id', '=', 'accounts.id')
             ->select('accounts.name', 'accounts.color')
             ->selectRaw('SUM(analytics_account_daily.income) as income, SUM(analytics_account_daily.expense) as expense')
@@ -229,6 +240,7 @@ class AnalyticsService
 
         $monthlyByCategory = AnalyticsCategoryDaily::where('analytics_category_daily.user_id', $user->id)
             ->whereBetween('analytics_category_daily.date', [$startOfMonth, $today])
+            ->where('analytics_category_daily.currency', $currency)
             ->join('categories', 'analytics_category_daily.category_id', '=', 'categories.id')
             ->select('categories.name')
             ->selectRaw('SUM(analytics_category_daily.amount) as total')
@@ -238,6 +250,7 @@ class AnalyticsService
 
         $incomeTrend = AnalyticsDaily::where('user_id', $user->id)
             ->where('date', '>=', now()->subDays(30)->toDateString())
+            ->where('currency', $currency)
             ->orderBy('date')
             ->get()
             ->map(fn ($item) => [

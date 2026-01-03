@@ -19,9 +19,10 @@ class TransactionService
             ->get();
     }
 
-    public function getRecentTransactions(User $user, int $limit = 5): Collection
+    public function getRecentTransactions(User $user, string $currency, int $limit = 5): Collection
     {
         return $user->transactions()
+            ->whereHas('account', fn ($query) => $query->where('currency_code', $currency))
             ->with(['account', 'category'])
             ->orderBy('date', 'desc')
             ->limit($limit)
@@ -64,9 +65,10 @@ class TransactionService
         return $transaction->delete();
     }
 
-    public function getTotalBalance(User $user): float
+    public function getTotalBalance(User $user, string $currency): float
     {
         return (float) $user->accounts()
+            ->where('currency_code', $currency)
             ->withSum('transactions', 'amount')
             ->get()
             ->sum(fn ($account) => $account->transactions_sum_amount ?? 0);

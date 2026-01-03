@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Services\OpenAIService;
+use Exception;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -47,12 +48,26 @@ class Transaction extends Model
     public static function createFromAIPrompt(User $user, string $prompt): Transaction
     {
         $openai = app(OpenAIService::class);
-        $parsed = $openai->parseTransactionPrompt($prompt);
+        $parsed = $openai->parseTransactionPrompt($user, $prompt);
 
-        $account = Account::firstOrCreate(
-            ['user_id' => $user->id, 'name' => $parsed['account_name']],
-            ['color' => '#3B82F6']
-        );
+        $accountName = $parsed['account_name'];
+        $detectedCurrency = $parsed['currency'] ?? null;
+
+        $account = Account::where('user_id', $user->id)->where('name', $accountName)->first();
+
+        if ($account) {
+            if ($detectedCurrency && $account->currency_code !== $detectedCurrency) {
+                throw new Exception("Currency mismatch: Account '{$account->name}' is {$account->currency_code} but transaction specified {$detectedCurrency}.");
+            }
+        } else {
+            $currencyToUse = $detectedCurrency ?? $user->currency_code ?? 'USD';
+            $account = Account::create([
+                'user_id' => $user->id,
+                'name' => $accountName,
+                'color' => '#3B82F6',
+                'currency_code' => $currencyToUse,
+            ]);
+        }
 
         $category = Category::firstOrCreate(
             ['user_id' => $user->id, 'name' => $parsed['category_name']]

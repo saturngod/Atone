@@ -25,6 +25,7 @@ class AccountController extends Controller
     {
         return Inertia::render('Accounts/Index', [
             'accounts' => $this->accountService->getAccountsForUser($request->user()),
+            'supported_currencies' => config('finance.currencies'),
         ]);
     }
 
