@@ -1,6 +1,17 @@
+import AppLogoIcon from '@/components/app-logo-icon';
+import { Button } from '@/components/ui/button';
 import { dashboard, login } from '@/routes';
 import { type SharedData } from '@/types';
 import { Head, Link, usePage } from '@inertiajs/react';
+import {
+    BarChart3,
+    Brain,
+    CheckCircle2,
+    MessageSquare,
+    Shield,
+    Sparkles,
+    Wallet,
+} from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 
 export default function Welcome({
@@ -41,333 +52,286 @@ export default function Welcome({
 
     return (
         <>
-            <Head title="Welcome">
+            <Head title="Welcome to SPF">
                 <link rel="preconnect" href="https://fonts.bunny.net" />
                 <link
-                    href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600"
+                    href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600,700"
                     rel="stylesheet"
                 />
             </Head>
-            <div className="flex min-h-screen flex-col items-center bg-[#FDFDFC] p-6 text-[#1b1b18] lg:justify-center lg:p-8 dark:bg-[#0a0a0a]">
-                <header className="mb-6 w-full max-w-[335px] text-sm not-has-[nav]:hidden lg:max-w-4xl">
-                    <nav className="flex items-center justify-end gap-4">
-                        {auth.user ? (
-                            <Link
-                                href={dashboard()}
-                                className="inline-block rounded-sm border border-[#19140035] px-5 py-1.5 text-sm leading-normal text-[#1b1b18] hover:border-[#1915014a] dark:border-[#3E3E3A] dark:text-[#EDEDEC] dark:hover:border-[#62605b]"
-                            >
-                                Dashboard
-                            </Link>
-                        ) : (
-                            <>
-                                <Link
-                                    href={login()}
-                                    className="inline-block rounded-sm border border-transparent px-5 py-1.5 text-sm leading-normal text-[#1b1b18] hover:border-[#19140035] dark:text-[#EDEDEC] dark:hover:border-[#3E3E3A]"
-                                >
-                                    Log in
+
+            <div className="min-h-screen bg-neutral-50 text-neutral-900 selection:bg-orange-500/20 dark:bg-neutral-950 dark:text-neutral-50">
+                {/* Navigation */}
+                <header className="fixed top-0 z-50 w-full border-b border-white/50 bg-white/50 backdrop-blur-xl dark:border-neutral-800/50 dark:bg-neutral-950/50">
+                    <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+                        <div className="flex items-center gap-2">
+                            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-orange-600 text-white shadow-lg shadow-orange-500/20">
+                                <AppLogoIcon className="h-5 w-5" />
+                            </div>
+                            <span className="text-lg font-bold tracking-tight">
+                                SPF
+                            </span>
+                        </div>
+
+                        <nav className="flex items-center gap-4">
+                            {auth.user ? (
+                                <Link href={dashboard()}>
+                                    <Button>Go to Dashboard</Button>
                                 </Link>
-                                {canRegister && registerUrl && (
+                            ) : (
+                                <>
                                     <Link
-                                        href={registerUrl}
-                                        className="inline-block rounded-sm border border-[#19140035] px-5 py-1.5 text-sm leading-normal text-[#1b1b18] hover:border-[#1915014a] dark:border-[#3E3E3A] dark:text-[#EDEDEC] dark:hover:border-[#62605b]"
+                                        href={login()}
+                                        className="text-sm font-medium text-neutral-600 transition-colors hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-50"
                                     >
-                                        Register
+                                        Log in
                                     </Link>
-                                )}
-                            </>
-                        )}
-                    </nav>
+                                    {canRegister && registerUrl && (
+                                        <Link href={registerUrl}>
+                                            <Button>Get Started</Button>
+                                        </Link>
+                                    )}
+                                </>
+                            )}
+                        </nav>
+                    </div>
                 </header>
-                <div className="flex w-full items-center justify-center opacity-100 transition-opacity duration-750 lg:grow starting:opacity-0">
-                    <main className="flex w-full max-w-[335px] flex-col-reverse lg:max-w-4xl lg:flex-row">
-                        <div className="flex-1 rounded-br-lg rounded-bl-lg bg-white p-6 pb-12 text-[13px] leading-[20px] shadow-[inset_0px_0px_0px_1px_rgba(26,26,0,0.16)] lg:rounded-tl-lg lg:rounded-br-none lg:p-20 dark:bg-[#161615] dark:text-[#EDEDEC] dark:shadow-[inset_0px_0px_0px_1px_#fffaed2d]">
-                            <h1 className="mb-1 text-2xl font-medium">
-                                Personal Finance App
-                            </h1>
-                            <p className="mb-6 text-sm text-[#706f6c] dark:text-[#A1A09A]">
-                                Track your finances with AI-powered insights.
-                                Create transactions using natural language and
-                                visualize your spending patterns.
-                            </p>
 
-                            <div className="mb-6 space-y-3">
-                                <div className="flex items-start gap-3">
-                                    <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400">
-                                        <svg
-                                            className="h-3 w-3"
-                                            fill="none"
-                                            viewBox="0 0 24 24"
-                                            stroke="currentColor"
-                                        >
-                                            <path
-                                                strokeLinecap="round"
-                                                strokeLinejoin="round"
-                                                strokeWidth={2}
-                                                d="M5 13l4 4L19 7"
-                                            />
-                                        </svg>
-                                    </div>
-                                    <div>
-                                        <span className="font-medium text-[#1b1b18] dark:text-[#EDEDEC]">
-                                            AI-Powered Transactions
-                                        </span>
-                                        <p className="mt-0.5 text-xs text-[#706f6c] dark:text-[#A1A09A]">
-                                            Create transactions using natural
-                                            language with OpenAI/Nemotron
-                                        </p>
-                                    </div>
-                                </div>
+                <main className="pt-24">
+                    {/* Hero Section */}
+                    <section className="relative overflow-hidden px-4 py-20 sm:px-6 lg:px-8">
+                        <div className="absolute top-0 left-1/2 -z-10 h-[600px] w-[600px] -translate-x-1/2 rounded-full bg-orange-500/20 opacity-30 blur-[100px] filter dark:bg-orange-500/10"></div>
 
-                                <div className="flex items-start gap-3">
-                                    <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
-                                        <svg
-                                            className="h-3 w-3"
-                                            fill="none"
-                                            viewBox="0 0 24 24"
-                                            stroke="currentColor"
-                                        >
-                                            <path
-                                                strokeLinecap="round"
-                                                strokeLinejoin="round"
-                                                strokeWidth={2}
-                                                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                                            />
-                                        </svg>
-                                    </div>
-                                    <div>
-                                        <span className="font-medium text-[#1b1b18] dark:text-[#EDEDEC]">
-                                            Analytics Dashboard
-                                        </span>
-                                        <p className="mt-0.5 text-xs text-[#706f6c] dark:text-[#A1A09A]">
-                                            Track daily, monthly, and yearly
-                                            spending by account and category
-                                        </p>
-                                    </div>
-                                </div>
-
-                                <div className="flex items-start gap-3">
-                                    <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400">
-                                        <svg
-                                            className="h-3 w-3"
-                                            fill="none"
-                                            viewBox="0 0 24 24"
-                                            stroke="currentColor"
-                                        >
-                                            <path
-                                                strokeLinecap="round"
-                                                strokeLinejoin="round"
-                                                strokeWidth={2}
-                                                d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"
-                                            />
-                                        </svg>
-                                    </div>
-                                    <div>
-                                        <span className="font-medium text-[#1b1b18] dark:text-[#EDEDEC]">
-                                            Category Management
-                                        </span>
-                                        <p className="mt-0.5 text-xs text-[#706f6c] dark:text-[#A1A09A]">
-                                            Organize transactions with custom
-                                            categories and merchants
-                                        </p>
-                                    </div>
-                                </div>
+                        <div className="mx-auto max-w-4xl text-center">
+                            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-orange-500/20 bg-orange-500/10 px-3 py-1 text-sm font-medium text-orange-600 dark:text-orange-400">
+                                <Sparkles className="h-4 w-4" />
+                                <span>Powered by OpenAI & Nemotron</span>
                             </div>
 
-                            <div className="flex flex-wrap gap-3 text-sm">
+                            <h1 className="mb-6 text-5xl font-bold tracking-tight sm:text-7xl">
+                                Master Your Money with{' '}
+                                <span className="bg-gradient-to-r from-orange-600 to-amber-600 bg-clip-text text-transparent dark:from-orange-400 dark:to-amber-400">
+                                    AI Intelligence
+                                </span>
+                            </h1>
+
+                            <p className="mx-auto mb-10 max-w-2xl text-lg text-neutral-600 dark:text-neutral-400">
+                                Stop manually entering numbers. Just talk to
+                                SPF. Our advanced AI parses your natural
+                                language to track expenses, categorize
+                                transactions, and forecast your financial
+                                future.
+                            </p>
+
+                            <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
                                 {auth.user ? (
-                                    <Link
-                                        href={dashboard()}
-                                        className="inline-block rounded-sm border border-black bg-[#1b1b18] px-5 py-2 text-sm leading-normal text-white hover:border-black hover:bg-black dark:border-[#eeeeec] dark:bg-[#eeeeec] dark:text-[#1C1C1A] dark:hover:border-white dark:hover:bg-white"
-                                    >
-                                        Go to Dashboard
+                                    <Link href={dashboard()}>
+                                        <Button
+                                            size="lg"
+                                            className="h-12 px-8 text-base shadow-xl shadow-orange-500/20"
+                                        >
+                                            Return to Dashboard
+                                        </Button>
                                     </Link>
                                 ) : (
                                     <>
-                                        <Link
-                                            href={login()}
-                                            className="inline-block rounded-sm border border-[#19140035] px-5 py-2 text-sm leading-normal text-[#1b1b18] hover:border-[#1915014a] dark:border-[#3E3E3A] dark:text-[#EDEDEC] dark:hover:border-[#62605b]"
-                                        >
-                                            Log in
-                                        </Link>
                                         {canRegister && registerUrl && (
-                                            <Link
-                                                href={registerUrl}
-                                                className="inline-block rounded-sm border border-black bg-[#1b1b18] px-5 py-2 text-sm leading-normal text-white hover:border-black hover:bg-black dark:border-[#eeeeec] dark:bg-[#eeeeec] dark:text-[#1C1C1A] dark:hover:border-white dark:hover:bg-white"
-                                            >
-                                                Get Started
+                                            <Link href={registerUrl}>
+                                                <Button
+                                                    size="lg"
+                                                    className="h-12 px-8 text-base shadow-xl shadow-orange-500/20"
+                                                >
+                                                    Start for Free
+                                                </Button>
                                             </Link>
                                         )}
+                                        <Link href={login()}>
+                                            <Button
+                                                variant="outline"
+                                                size="lg"
+                                                className="h-12 px-8 text-base"
+                                            >
+                                                Live Demo
+                                            </Button>
+                                        </Link>
                                     </>
                                 )}
                             </div>
-
-                            <div className="mt-8 border-t border-[#e3e3e0] pt-6 dark:border-[#3E3E3A]">
-                                <p className="mb-3 text-xs text-[#706f6c] dark:text-[#A1A09A]">
-                                    Built with
-                                </p>
-                                <div className="flex flex-wrap gap-4 text-xs">
-                                    <a
-                                        href="https://laravel.com"
-                                        target="_blank"
-                                        className="text-[#f53003] hover:underline"
-                                    >
-                                        Laravel 11
-                                    </a>
-                                    <a
-                                        href="https://react.dev"
-                                        target="_blank"
-                                        className="text-[#f53003] hover:underline"
-                                    >
-                                        React 18
-                                    </a>
-                                    <a
-                                        href="https://inertiajs.com"
-                                        target="_blank"
-                                        className="text-[#f53003] hover:underline"
-                                    >
-                                        Inertia.js
-                                    </a>
-                                    <a
-                                        href="https://tailwindcss.com"
-                                        target="_blank"
-                                        className="text-[#f53003] hover:underline"
-                                    >
-                                        Tailwind CSS
-                                    </a>
-                                    <a
-                                        href="https://openai.com"
-                                        target="_blank"
-                                        className="text-[#f53003] hover:underline"
-                                    >
-                                        OpenAI
-                                    </a>
-                                </div>
-                            </div>
                         </div>
-                        <div className="relative -mb-px aspect-[335/376] w-full shrink-0 overflow-hidden rounded-t-lg bg-gradient-to-br from-[#1b1b18] to-[#3E3E3A] lg:mb-0 lg:-ml-px lg:aspect-auto lg:w-[438px] lg:rounded-t-none lg:rounded-r-lg dark:from-[#161615] dark:to-[#2a2a2a]">
-                            <div className="absolute inset-0 flex items-center justify-center p-8">
-                                <div className="w-full max-w-[280px]">
-                                    <div className="mb-6 text-center">
-                                        <svg
-                                            className="mx-auto mb-4 h-16 w-16 text-[#f53003]"
-                                            fill="none"
-                                            viewBox="0 0 24 24"
-                                            stroke="currentColor"
-                                        >
-                                            <path
-                                                strokeLinecap="round"
-                                                strokeLinejoin="round"
-                                                strokeWidth={1.5}
-                                                d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                                            />
-                                        </svg>
-                                        <h2 className="text-xl font-semibold text-white">
-                                            Smart Finance Tracking
-                                        </h2>
+
+                        {/* Visual / Mockup Area */}
+                        <div className="relative mx-auto mt-20 max-w-5xl">
+                            <div className="overflow-hidden rounded-2xl border border-neutral-200 bg-white/50 shadow-2xl backdrop-blur-sm dark:border-neutral-800 dark:bg-neutral-900/50">
+                                <div className="border-b border-neutral-200 bg-white/80 p-4 dark:border-neutral-800 dark:bg-neutral-900/80">
+                                    <div className="flex items-center gap-2">
+                                        <div className="h-3 w-3 rounded-full bg-red-500/20"></div>
+                                        <div className="h-3 w-3 rounded-full bg-yellow-500/20"></div>
+                                        <div className="h-3 w-3 rounded-full bg-green-500/20"></div>
                                     </div>
-
-                                    <div className="space-y-3">
-                                        <div className="rounded-lg bg-white/10 p-4 backdrop-blur">
-                                            <div className="mb-2 flex justify-between text-sm text-white">
-                                                <span>Monthly Budget</span>
-                                                <span className="text-green-400">
-                                                    $2,450 / $3,000
-                                                </span>
-                                            </div>
-                                            <div className="h-2 overflow-hidden rounded-full bg-white/20">
-                                                <div
-                                                    className="h-full rounded-full bg-[#f53003]"
-                                                    style={{ width: '82%' }}
-                                                />
-                                            </div>
-                                        </div>
-
-                                        <div className="rounded-lg bg-white/10 p-4 backdrop-blur">
-                                            <div className="mb-2 flex justify-between text-sm text-white">
-                                                <span>Savings Goal</span>
-                                                <span className="text-blue-400">
-                                                    75%
-                                                </span>
-                                            </div>
-                                            <div className="h-2 overflow-hidden rounded-full bg-white/20">
-                                                <div
-                                                    className="h-full rounded-full bg-blue-500"
-                                                    style={{ width: '75%' }}
-                                                />
-                                            </div>
-                                        </div>
-
-                                        <div className="flex items-center justify-between rounded-lg bg-white/10 p-4 backdrop-blur">
-                                            <div className="flex items-center gap-3">
-                                                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-500/20">
-                                                    <svg
-                                                        className="h-5 w-5 text-green-400"
-                                                        fill="none"
-                                                        viewBox="0 0 24 24"
-                                                        stroke="currentColor"
-                                                    >
-                                                        <path
-                                                            strokeLinecap="round"
-                                                            strokeLinejoin="round"
-                                                            strokeWidth={2}
-                                                            d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                                                        />
-                                                    </svg>
+                                </div>
+                                <div className="p-8 md:p-12">
+                                    <div className="grid gap-12 md:grid-cols-2">
+                                        <div className="space-y-8">
+                                            <div className="space-y-4">
+                                                <div className="flex items-start gap-4">
+                                                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-100 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400">
+                                                        <MessageSquare className="h-5 w-5" />
+                                                    </div>
+                                                    <div className="rounded-2xl rounded-tl-none bg-neutral-100 p-4 text-sm dark:bg-neutral-800">
+                                                        <p>
+                                                            Spent $45 on
+                                                            groceries at Whole
+                                                            Foods and $12 for
+                                                            coffee at Starbucks
+                                                            today.
+                                                        </p>
+                                                    </div>
                                                 </div>
-                                                <span className="text-sm text-white">
-                                                    New Transaction
-                                                </span>
+                                                <div className="flex items-start justify-end gap-4">
+                                                    <div className="rounded-2xl rounded-tr-none bg-orange-600 p-4 text-sm text-white">
+                                                        <p>
+                                                            I've recorded those
+                                                            for you. Your
+                                                            grocery budget is
+                                                            now at 82% for the
+                                                            month.
+                                                        </p>
+                                                    </div>
+                                                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-orange-100 text-orange-600 dark:bg-orange-500/20 dark:text-orange-400">
+                                                        <Brain className="h-5 w-5" />
+                                                    </div>
+                                                </div>
                                             </div>
-                                            <svg
-                                                className="h-5 w-5 text-white/50"
-                                                fill="none"
-                                                viewBox="0 0 24 24"
-                                                stroke="currentColor"
-                                            >
-                                                <path
-                                                    strokeLinecap="round"
-                                                    strokeLinejoin="round"
-                                                    strokeWidth={2}
-                                                    d="M9 5l7 7-7 7"
-                                                />
-                                            </svg>
                                         </div>
 
-                                        <div className="rounded-lg bg-white/10 p-4 backdrop-blur">
-                                            <div className="mb-3 flex items-center gap-3">
-                                                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-purple-500/20">
-                                                    <svg
-                                                        className="h-4 w-4 text-purple-400"
-                                                        fill="none"
-                                                        viewBox="0 0 24 24"
-                                                        stroke="currentColor"
-                                                    >
-                                                        <path
-                                                            strokeLinecap="round"
-                                                            strokeLinejoin="round"
-                                                            strokeWidth={2}
-                                                            d="M13 10V3L4 14h7v7l9-11h-7z"
-                                                        />
-                                                    </svg>
+                                        <div className="space-y-6 rounded-xl border border-neutral-200 bg-neutral-50/50 p-6 dark:border-neutral-800 dark:bg-neutral-900/50">
+                                            <h3 className="font-semibold text-neutral-900 dark:text-neutral-100">
+                                                Recent Transactions
+                                            </h3>
+                                            <div className="space-y-4">
+                                                <div className="flex items-center justify-between">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-100 text-green-600 dark:bg-green-500/20">
+                                                            <div className="i-lucide-shopping-cart h-5 w-5" />
+                                                            🛒
+                                                        </div>
+                                                        <div>
+                                                            <p className="font-medium">
+                                                                Whole Foods
+                                                            </p>
+                                                            <p className="text-xs text-neutral-500">
+                                                                Groceries
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                    <span className="font-medium text-neutral-900 dark:text-neutral-100">
+                                                        -$45.00
+                                                    </span>
                                                 </div>
-                                                <span className="text-sm text-white">
-                                                    AI Analysis
-                                                </span>
+                                                <div className="flex items-center justify-between">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-100 text-amber-600 dark:bg-amber-500/20">
+                                                            <div className="i-lucide-coffee h-5 w-5" />
+                                                            ☕
+                                                        </div>
+                                                        <div>
+                                                            <p className="font-medium">
+                                                                Starbucks
+                                                            </p>
+                                                            <p className="text-xs text-neutral-500">
+                                                                Dining Out
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                    <span className="font-medium text-neutral-900 dark:text-neutral-100">
+                                                        -$12.00
+                                                    </span>
+                                                </div>
                                             </div>
-                                            <p className="text-xs text-white/60">
-                                                Your spending is 15% lower than
-                                                last month!
-                                            </p>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                            <div className="absolute inset-0 rounded-t-lg shadow-[inset_0px_0px_0px_1px_rgba(26,26,0,0.16)] lg:rounded-t-none lg:rounded-r-lg dark:shadow-[inset_0px_0px_0px_1px_#fffaed2d]" />
                         </div>
-                    </main>
-                </div>
-                <div className="hidden h-14.5 lg:block"></div>
+                    </section>
+
+                    {/* Features Grid */}
+                    <section className="mx-auto max-w-7xl px-4 py-24 sm:px-6 lg:px-8">
+                        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+                            <FeatureCard
+                                icon={<MessageSquare className="h-6 w-6" />}
+                                title="Natural Language"
+                                description="Just text or say what you spent. Our AI understands context, dates, and categories automatically."
+                            />
+                            <FeatureCard
+                                icon={<Brain className="h-6 w-6" />}
+                                title="Smart Categorization"
+                                description="Transactions are automatically categorized based on merchant data and your spending history."
+                            />
+                            <FeatureCard
+                                icon={<BarChart3 className="h-6 w-6" />}
+                                title="Deep Analytics"
+                                description="Visualize your spending patterns with beautiful, interactive charts and monthly reports."
+                            />
+                            <FeatureCard
+                                icon={<Wallet className="h-6 w-6" />}
+                                title="Multi-Currency"
+                                description="Seamlessly handle transactions in multiple currencies with real-time exchange rates."
+                            />
+                            <FeatureCard
+                                icon={<Shield className="h-6 w-6" />}
+                                title="Private & Secure"
+                                description="Your financial data is encrypted and never shared. You have complete control over your information."
+                            />
+                            <FeatureCard
+                                icon={<CheckCircle2 className="h-6 w-6" />}
+                                title="Goal Tracking"
+                                description="Set budgets and savings goals. Get notified when you're getting close to your limits."
+                            />
+                        </div>
+                    </section>
+
+                    {/* Footer */}
+                    <footer className="border-t border-neutral-200 bg-white py-12 dark:border-neutral-800 dark:bg-neutral-950">
+                        <div className="mx-auto max-w-7xl px-4 text-center sm:px-6 lg:px-8">
+                            <div className="mb-4 flex items-center justify-center gap-2">
+                                <AppLogoIcon className="h-6 w-6 text-neutral-900 dark:text-neutral-100" />
+                                <span className="text-xl font-bold tracking-tight">
+                                    SPF
+                                </span>
+                            </div>
+                            <p className="text-sm text-neutral-500">
+                                &copy; {new Date().getFullYear()} Simple
+                                Personal Finance. All rights reserved.
+                            </p>
+                        </div>
+                    </footer>
+                </main>
             </div>
         </>
+    );
+}
+
+function FeatureCard({
+    icon,
+    title,
+    description,
+}: {
+    icon: React.ReactNode;
+    title: string;
+    description: string;
+}) {
+    return (
+        <div className="group rounded-2xl border border-neutral-200 bg-white p-8 transition-all hover:border-orange-500/50 hover:shadow-lg hover:shadow-orange-500/5 dark:border-neutral-800 dark:bg-neutral-900">
+            <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-orange-50 text-orange-600 transition-colors group-hover:bg-orange-600 group-hover:text-white dark:bg-neutral-800 dark:text-orange-400 dark:group-hover:bg-orange-600 dark:group-hover:text-white">
+                {icon}
+            </div>
+            <h3 className="mb-2 text-xl font-semibold text-neutral-900 dark:text-neutral-100">
+                {title}
+            </h3>
+            <p className="text-neutral-600 dark:text-neutral-400">
+                {description}
+            </p>
+        </div>
     );
 }

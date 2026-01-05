@@ -3,9 +3,6 @@
 # Pre-commit hook for Personal Finance App
 # Runs linting, formatting, and type checks before commit
 
-echo "NPM format..."
-npm run format
-
 echo "🔍 Running pre-commit checks..."
 
 # Get the project root directory (where .git is located)
