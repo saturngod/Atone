@@ -26,11 +26,11 @@ export default function TransactionForm({
     categories,
 }: TransactionFormProps) {
     const [categorySearch, setCategorySearch] = useState('');
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [newCategoryName, setNewCategoryName] = useState<string | null>(null);
 
     const form = useForm({
         account_id: accounts[0]?.id?.toString() || '',
-        category_id: '',
         category_name: '',
         amount: '',
         description: '',
@@ -42,18 +42,22 @@ export default function TransactionForm({
     );
 
     const handleCategorySelect = (categoryId: string) => {
-        form.setData('category_id', categoryId);
-        form.setData('category_name', '');
+        const category = categories.find((c) => c.id.toString() === categoryId);
+        if (category) {
+            setCategorySearch(category.name);
+            form.setData('category_name', category.name);
+        }
         setNewCategoryName(null);
-        setCategorySearch('');
+        setIsDropdownOpen(false);
     };
 
     const handleCategoryInputChange = (value: string) => {
         setCategorySearch(value);
+        setIsDropdownOpen(true);
+        form.setData('category_name', value);
 
         if (!value.trim()) {
             setNewCategoryName(null);
-            form.setData('category_name', '');
             return;
         }
 
@@ -63,17 +67,8 @@ export default function TransactionForm({
 
         if (!exists) {
             setNewCategoryName(value.trim());
-            form.setData('category_id', '');
-            form.setData('category_name', value.trim());
         } else {
             setNewCategoryName(null);
-            form.setData('category_name', '');
-            const matched = categories.find(
-                (c) => c.name.toLowerCase() === value.toLowerCase(),
-            );
-            if (matched) {
-                form.setData('category_id', matched.id.toString());
-            }
         }
     };
 
@@ -131,25 +126,31 @@ export default function TransactionForm({
                             onChange={(e) =>
                                 handleCategoryInputChange(e.target.value)
                             }
+                            onFocus={() => setIsDropdownOpen(true)}
+                            onBlur={() =>
+                                setTimeout(() => setIsDropdownOpen(false), 200)
+                            }
                         />
-                        {categorySearch && !newCategoryName && (
-                            <div className="absolute z-10 mt-1 max-h-32 w-full overflow-auto rounded-md border bg-background shadow-md">
-                                {filteredCategories.map((category) => (
-                                    <button
-                                        key={category.id}
-                                        type="button"
-                                        className="w-full px-3 py-2 text-left hover:bg-accent hover:text-accent-foreground"
-                                        onClick={() =>
-                                            handleCategorySelect(
-                                                category.id.toString(),
-                                            )
-                                        }
-                                    >
-                                        {category.name}
-                                    </button>
-                                ))}
-                            </div>
-                        )}
+                        {categorySearch &&
+                            !newCategoryName &&
+                            isDropdownOpen && (
+                                <div className="absolute z-10 mt-1 max-h-32 w-full overflow-auto rounded-md border bg-background shadow-md">
+                                    {filteredCategories.map((category) => (
+                                        <button
+                                            key={category.id}
+                                            type="button"
+                                            className="w-full px-3 py-2 text-left hover:bg-accent hover:text-accent-foreground"
+                                            onClick={() =>
+                                                handleCategorySelect(
+                                                    category.id.toString(),
+                                                )
+                                            }
+                                        >
+                                            {category.name}
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
                         {newCategoryName && (
                             <div className="mt-1 flex items-center gap-1 text-sm text-green-600">
                                 <Plus className="h-3 w-3" />
@@ -159,10 +160,9 @@ export default function TransactionForm({
                             </div>
                         )}
                     </div>
-                    {(form.errors.category_id || form.errors.category_name) && (
+                    {form.errors.category_name && (
                         <p className="mt-1 text-sm text-destructive">
-                            {form.errors.category_id ||
-                                form.errors.category_name}
+                            {form.errors.category_name}
                         </p>
                     )}
                 </div>
