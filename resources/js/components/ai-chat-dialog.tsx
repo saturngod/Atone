@@ -6,6 +6,7 @@ import {
     DialogTrigger,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { useVisualViewport } from '@/hooks/use-visual-viewport';
 import { ai } from '@/routes';
 import axios from 'axios';
 import {
@@ -22,7 +23,6 @@ import {
 import { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { useVisualViewport } from '@/hooks/use-visual-viewport';
 
 interface AIChatDialogProps {
     children?: React.ReactNode;
@@ -180,20 +180,22 @@ export function AIChatDialog({ children }: AIChatDialogProps) {
     const viewport = useVisualViewport();
 
     // Calculate dynamic styles for mobile keyboard
-    const mobileStyle = viewport ? {
-        borderRadius: '1rem 1rem 0 0',
-        maxHeight: `${viewport.height - 32}px`,
-        height: 'auto',
-        bottom: `${window.innerHeight - viewport.height + 16}px`,
-        margin: '0 8px',
-        transition: 'bottom 0.1s, max-height 0.1s', // Smooth transition
-    } : {
-        borderRadius: '1rem 1rem 0 0',
-        maxHeight: 'calc(100vh - 32px)',
-        height: 'auto',
-        bottom: '16px',
-        margin: '0 8px',
-    };
+    const mobileStyle = viewport
+        ? {
+              borderRadius: '1rem 1rem 0 0',
+              maxHeight: `${viewport.height - 32}px`,
+              height: 'auto',
+              bottom: `${window.innerHeight - viewport.height + 16}px`,
+              margin: '0 8px',
+              transition: 'bottom 0.1s, max-height 0.1s', // Smooth transition
+          }
+        : {
+              borderRadius: '1rem 1rem 0 0',
+              maxHeight: 'calc(100vh - 32px)',
+              height: 'auto',
+              bottom: '16px',
+              margin: '0 8px',
+          };
 
     return (
         <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -219,10 +221,11 @@ export function AIChatDialog({ children }: AIChatDialogProps) {
                                 {messages.map((msg, index) => (
                                     <div
                                         key={index}
-                                        className={`flex gap-3 ${msg.role === 'user'
-                                            ? 'justify-end'
-                                            : 'justify-start'
-                                            }`}
+                                        className={`flex gap-3 ${
+                                            msg.role === 'user'
+                                                ? 'justify-end'
+                                                : 'justify-start'
+                                        }`}
                                     >
                                         {msg.role === 'assistant' && (
                                             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10">
@@ -230,14 +233,15 @@ export function AIChatDialog({ children }: AIChatDialogProps) {
                                             </div>
                                         )}
                                         <div
-                                            className={`max-w-[80%] rounded-lg px-3 py-2 ${msg.role === 'user'
-                                                ? 'bg-primary text-primary-foreground'
-                                                : 'bg-muted/50'
-                                                }`}
+                                            className={`max-w-[80%] rounded-lg px-3 py-2 ${
+                                                msg.role === 'user'
+                                                    ? 'bg-primary text-primary-foreground'
+                                                    : 'bg-muted/50'
+                                            }`}
                                         >
                                             {msg.role === 'assistant' &&
-                                                msg.tool_calls &&
-                                                msg.tool_calls.length > 0 ? (
+                                            msg.tool_calls &&
+                                            msg.tool_calls.length > 0 ? (
                                                 <span className="text-sm text-muted-foreground">
                                                     🛠 Processing...
                                                 </span>
@@ -411,10 +415,11 @@ function AIResult({
                                     </span>
                                 </div>
                                 <span
-                                    className={`font-medium ${t.amount >= 0
-                                        ? 'text-green-600'
-                                        : 'text-red-600'
-                                        }`}
+                                    className={`font-medium ${
+                                        t.amount >= 0
+                                            ? 'text-green-600'
+                                            : 'text-red-600'
+                                    }`}
                                 >
                                     {formatCurrency(t.amount)}
                                 </span>
@@ -460,10 +465,11 @@ function AIResult({
                                 Net
                             </p>
                             <p
-                                className={`font-semibold ${(result.summary?.net_amount ?? 0) >= 0
-                                    ? 'text-green-600'
-                                    : 'text-red-600'
-                                    }`}
+                                className={`font-semibold ${
+                                    (result.summary?.net_amount ?? 0) >= 0
+                                        ? 'text-green-600'
+                                        : 'text-red-600'
+                                }`}
                             >
                                 $
                                 {Math.abs(
@@ -654,20 +660,22 @@ export function AIChatFAB() {
     const viewport = useVisualViewport();
 
     // Calculate dynamic styles for mobile keyboard
-    const mobileStyle = viewport ? {
-        borderRadius: '1rem 1rem 0 0',
-        maxHeight: `${viewport.height - 32}px`,
-        height: 'auto',
-        bottom: `${window.innerHeight - viewport.height + 16}px`,
-        margin: '0 8px',
-        transition: 'bottom 0.1s, max-height 0.1s',
-    } : {
-        borderRadius: '1rem 1rem 0 0',
-        maxHeight: 'calc(100vh - 32px)',
-        height: 'auto',
-        bottom: '16px',
-        margin: '0 8px',
-    };
+    const mobileStyle = viewport
+        ? {
+              borderRadius: '1rem 1rem 0 0',
+              maxHeight: `${viewport.height - 32}px`,
+              height: 'auto',
+              bottom: `${window.innerHeight - viewport.height + 16}px`,
+              margin: '0 8px',
+              transition: 'bottom 0.1s, max-height 0.1s',
+          }
+        : {
+              borderRadius: '1rem 1rem 0 0',
+              maxHeight: 'calc(100vh - 32px)',
+              height: 'auto',
+              bottom: '16px',
+              margin: '0 8px',
+          };
 
     return (
         <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -676,10 +684,7 @@ export function AIChatFAB() {
                     <Bot className="h-6 w-6" />
                 </Button>
             </DialogTrigger>
-            <DialogContent
-                className="gap-0 p-0"
-                mobileStyle={mobileStyle}
-            >
+            <DialogContent className="gap-0 p-0" mobileStyle={mobileStyle}>
                 <div className="flex max-h-[600px] flex-col">
                     <div className="flex shrink-0 items-center justify-between border-b p-4">
                         <DialogTitle className="flex items-center gap-2 text-base">
@@ -697,10 +702,11 @@ export function AIChatFAB() {
                                 {messages.map((msg, index) => (
                                     <div
                                         key={index}
-                                        className={`flex gap-3 ${msg.role === 'user'
-                                            ? 'justify-end'
-                                            : 'justify-start'
-                                            }`}
+                                        className={`flex gap-3 ${
+                                            msg.role === 'user'
+                                                ? 'justify-end'
+                                                : 'justify-start'
+                                        }`}
                                     >
                                         {msg.role === 'assistant' && (
                                             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10">
@@ -708,14 +714,15 @@ export function AIChatFAB() {
                                             </div>
                                         )}
                                         <div
-                                            className={`max-w-[80%] rounded-lg px-3 py-2 ${msg.role === 'user'
-                                                ? 'bg-primary text-primary-foreground'
-                                                : 'bg-muted/50'
-                                                }`}
+                                            className={`max-w-[80%] rounded-lg px-3 py-2 ${
+                                                msg.role === 'user'
+                                                    ? 'bg-primary text-primary-foreground'
+                                                    : 'bg-muted/50'
+                                            }`}
                                         >
                                             {msg.role === 'assistant' &&
-                                                msg.tool_calls &&
-                                                msg.tool_calls.length > 0 ? (
+                                            msg.tool_calls &&
+                                            msg.tool_calls.length > 0 ? (
                                                 <span className="text-sm text-muted-foreground">
                                                     🛠 Processing...
                                                 </span>
