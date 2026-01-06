@@ -126,15 +126,23 @@ export default function Dashboard({
         });
     }
 
-    const chartData = trend.map((item) => ({
-        date: new Date(item.date + 'T00:00:00').toLocaleDateString('en-US', {
-            timeZone: timezone,
-            month: 'short',
-            day: 'numeric',
-        }),
-        income: toNumber(item.income),
-        expense: toNumber(item.expense),
-    }));
+    const chartData = trend.map((item) => {
+        // Handle both simple date strings (YYYY-MM-DD) and ISO datetime strings
+        const dateStr = String(item.date);
+        const date = dateStr.includes('T')
+            ? new Date(dateStr)
+            : new Date(dateStr + 'T00:00:00');
+
+        return {
+            date: date.toLocaleDateString('en-US', {
+                timeZone: timezone,
+                month: 'short',
+                day: 'numeric',
+            }),
+            income: toNumber(item.income),
+            expense: toNumber(item.expense),
+        };
+    });
 
     return (
         <>
