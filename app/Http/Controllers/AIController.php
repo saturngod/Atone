@@ -8,6 +8,8 @@ use App\Services\OpenAIService;
 use App\Services\TransactionQueryService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class AIController extends Controller
 {
@@ -15,6 +17,11 @@ class AIController extends Controller
         private OpenAIService $openaiService,
         private TransactionQueryService $transactionQueryService,
     ) {}
+
+    public function index(): Response
+    {
+        return Inertia::render('AI/Index');
+    }
 
     public function handle(Request $request): JsonResponse
     {

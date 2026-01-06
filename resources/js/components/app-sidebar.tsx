@@ -14,7 +14,7 @@ import { dashboard } from '@/routes';
 import transactions from '@/routes/transactions';
 import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
-import { CreditCard, LayoutGrid, Tag, Wallet } from 'lucide-react';
+import { Bot, CreditCard, LayoutGrid, Tag, Wallet } from 'lucide-react';
 import AppLogo from './app-logo';
 
 const mainNavItems: NavItem[] = [
@@ -37,6 +37,11 @@ const mainNavItems: NavItem[] = [
         title: 'Categories',
         href: '/categories',
         icon: Tag,
+    },
+    {
+        title: 'AI Assistant',
+        href: '/ai',
+        icon: Bot,
     },
 ];
 

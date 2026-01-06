@@ -1,5 +1,4 @@
 import TransactionForm from '@/components/TransactionForm';
-import { AIChatDialog, AIChatFAB } from '@/components/ai-chat-dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -29,8 +28,8 @@ import { useTimezone } from '@/hooks/use-timezone';
 import AppLayout from '@/layouts/app-layout';
 import transactions from '@/routes/transactions';
 import { type BreadcrumbItem } from '@/types';
-import { Head, useForm } from '@inertiajs/react';
-import { Bot, Pencil, Search, Trash2, X } from 'lucide-react';
+import { Head, Link, router, useForm } from '@inertiajs/react';
+import { Bot, Pencil, RefreshCw, Search, Trash2, X } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 interface Account {
@@ -210,16 +209,26 @@ export default function TransactionsIndex({
                 <div className="container mx-auto max-w-6xl px-4 py-10 md:px-0">
                     <div className="mb-6 flex items-center justify-between">
                         <h1 className="text-3xl font-bold">Transactions</h1>
-                        <AIChatDialog>
+                        <div className="flex items-center gap-2">
                             <Button
                                 variant="outline"
-                                size="sm"
-                                className="hidden md:flex"
+                                size="icon"
+                                onClick={() => router.reload()}
+                                title="Refresh"
                             >
-                                <Bot className="mr-2 h-4 w-4" />
-                                AI Assistant
+                                <RefreshCw className="h-4 w-4" />
                             </Button>
-                        </AIChatDialog>
+                            <Link href="/ai">
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="hidden md:flex"
+                                >
+                                    <Bot className="mr-2 h-4 w-4" />
+                                    AI Assistant
+                                </Button>
+                            </Link>
+                        </div>
                     </div>
 
                     <TransactionForm
@@ -591,7 +600,6 @@ export default function TransactionsIndex({
                     </Dialog>
                 </div>
             </AppLayout>
-            <AIChatFAB />
         </>
     );
 }

@@ -7,7 +7,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { useVisualViewport } from '@/hooks/use-visual-viewport';
-import { ai } from '@/routes';
+import ai from '@/routes/ai';
 import axios from 'axios';
 import {
     ArrowDownCircle,
@@ -134,7 +134,7 @@ export function AIChatDialog({ children }: AIChatDialogProps) {
         setResult(null);
 
         try {
-            const url = ai.url?.() || '/ai';
+            const url = ai.handle.url?.() || '/ai';
             const response = await axios.post(url, {
                 prompt,
                 messages: newMessages,
@@ -614,7 +614,7 @@ export function AIChatFAB() {
         setResult(null);
 
         try {
-            const url = ai.url?.() || '/ai';
+            const url = ai.handle.url?.() || '/ai';
             const response = await axios.post(url, {
                 prompt,
                 messages: newMessages,

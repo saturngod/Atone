@@ -1,4 +1,3 @@
-import { AIChatDialog, AIChatFAB } from '@/components/ai-chat-dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -17,8 +16,8 @@ import { useTimezone } from '@/hooks/use-timezone';
 import AppLayout from '@/layouts/app-layout';
 import { dashboard } from '@/routes';
 import { type BreadcrumbItem } from '@/types';
-import { Head, router } from '@inertiajs/react';
-import { Bot, TrendingDown, TrendingUp, Wallet } from 'lucide-react';
+import { Head, Link, router } from '@inertiajs/react';
+import { Bot, RefreshCw, TrendingDown, TrendingUp, Wallet } from 'lucide-react';
 import { Area, AreaChart, XAxis, YAxis } from 'recharts';
 
 interface Transaction {
@@ -145,6 +144,14 @@ export default function Dashboard({
                     <div className="mb-6 flex items-center justify-between">
                         <h1 className="text-3xl font-bold">Dashboard</h1>
                         <div className="flex items-center gap-2">
+                            <Button
+                                variant="outline"
+                                size="icon"
+                                onClick={() => router.reload()}
+                                title="Refresh"
+                            >
+                                <RefreshCw className="h-4 w-4" />
+                            </Button>
                             <Select
                                 value={currency}
                                 onValueChange={(value) =>
@@ -167,7 +174,7 @@ export default function Dashboard({
                                     ))}
                                 </SelectContent>
                             </Select>
-                            <AIChatDialog>
+                            <Link href="/ai">
                                 <Button
                                     variant="outline"
                                     size="sm"
@@ -176,7 +183,7 @@ export default function Dashboard({
                                     <Bot className="mr-2 h-4 w-4" />
                                     AI Assistant
                                 </Button>
-                            </AIChatDialog>
+                            </Link>
                         </div>
                     </div>
 
@@ -537,7 +544,6 @@ export default function Dashboard({
                     </div>
                 </div>
             </AppLayout>
-            <AIChatFAB />
         </>
     );
 }

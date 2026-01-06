@@ -39,7 +39,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('/{transaction}', [TransactionController::class, 'destroy'])->name('destroy');
     });
 
-    Route::post('ai', [AIController::class, 'handle'])->name('ai');
+    Route::prefix('ai')->name('ai.')->group(function () {
+        Route::get('/', [AIController::class, 'index'])->name('index');
+        Route::post('/', [AIController::class, 'handle'])->name('handle');
+    });
 });
 
 require __DIR__.'/settings.php';
