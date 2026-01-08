@@ -117,15 +117,40 @@ export default function AIChat() {
     const [result, setResult] = useState<ResponseData | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [messages, setMessages] = useState<Message[]>([]);
+    const [keyboardHeight, setKeyboardHeight] = useState(0);
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    const inputRef = useRef<HTMLInputElement>(null);
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     };
 
+    // Handle mobile keyboard visibility
+    useEffect(() => {
+        const handleResize = () => {
+            if (window.visualViewport) {
+                const viewportHeight = window.visualViewport.height;
+                const windowHeight = window.innerHeight;
+                // If viewport is significantly smaller than window, keyboard is likely open
+                const heightDiff = windowHeight - viewportHeight;
+                setKeyboardHeight(heightDiff > 150 ? heightDiff : 0);
+            }
+        };
+
+        if (window.visualViewport) {
+            window.visualViewport.addEventListener('resize', handleResize);
+            return () => {
+                window.visualViewport!.removeEventListener(
+                    'resize',
+                    handleResize,
+                );
+            };
+        }
+    }, []);
+
     useEffect(() => {
         scrollToBottom();
-    }, [messages, result]);
+    }, [messages, result, keyboardHeight]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -180,7 +205,7 @@ export default function AIChat() {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="AI Assistant" />
-            <div className="flex h-[calc(100vh-4rem)] flex-col">
+            <div className="flex h-[calc(100dvh-4rem)] flex-col">
                 {/* Header */}
                 <div className="flex shrink-0 items-center justify-between border-b bg-background px-4 py-3 md:px-6">
                     <div className="flex items-center gap-3">
@@ -316,6 +341,7 @@ export default function AIChat() {
                     >
                         <div className="relative flex-1">
                             <Input
+                                ref={inputRef}
                                 placeholder="Ask about your finances..."
                                 value={prompt}
                                 onChange={(e) => setPrompt(e.target.value)}
