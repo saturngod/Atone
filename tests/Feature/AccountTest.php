@@ -24,6 +24,7 @@ it('creates account with valid data', function () {
     actingAs($user)->post('/accounts', [
         'name' => 'Test Account',
         'color' => '#3b82f6',
+        'currency_code' => 'USD',
     ])->assertRedirect();
 
     expect(Account::where('user_id', $user->id)->where('name', 'Test Account')->exists())->toBeTrue();

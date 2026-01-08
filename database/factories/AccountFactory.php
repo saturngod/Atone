@@ -18,6 +18,7 @@ class AccountFactory extends Factory
             'user_id' => User::factory(),
             'name' => $this->faker->word(),
             'color' => $this->faker->hexColor(),
+            'currency_code' => 'USD',
         ];
     }
 }
