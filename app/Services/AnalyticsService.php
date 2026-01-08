@@ -207,25 +207,29 @@ class AnalyticsService
         }
     }
 
-    public function getDashboardData(User $user, string $currency): array
+    public function getDashboardData(User $user, string $currency, ?string $timezone = null): array
     {
-        $today = now()->toDateString();
-        $startOfMonth = now()->startOfMonth()->toDateString();
-        $startOfYear = now()->startOfYear()->toDateString();
+        $timezone = $timezone ?? config('app.timezone');
+
+        $today = now()->setTimezone($timezone)->toDateString();
+        $startOfMonth = now()->setTimezone($timezone)->startOfMonth()->toDateString();
+        $startOfYear = now()->setTimezone($timezone)->startOfYear()->toDateString();
 
         $daily = AnalyticsDaily::where('user_id', $user->id)
             ->where('date', $today)
             ->where('currency', $currency)
             ->first();
 
+        $nowInTimezone = now()->setTimezone($timezone);
+
         $monthly = AnalyticsMonthly::where('user_id', $user->id)
-            ->where('year', now()->year)
-            ->where('month', now()->month)
+            ->where('year', $nowInTimezone->year)
+            ->where('month', $nowInTimezone->month)
             ->where('currency', $currency)
             ->first();
 
         $yearly = AnalyticsYearly::where('user_id', $user->id)
-            ->where('year', now()->year)
+            ->where('year', $nowInTimezone->year)
             ->where('currency', $currency)
             ->first();
 
@@ -249,7 +253,7 @@ class AnalyticsService
             ->get();
 
         $incomeTrend = AnalyticsDaily::where('user_id', $user->id)
-            ->where('date', '>=', now()->subDays(30)->toDateString())
+            ->where('date', '>=', $nowInTimezone->copy()->subDays(30)->toDateString())
             ->where('currency', $currency)
             ->orderBy('date')
             ->get()

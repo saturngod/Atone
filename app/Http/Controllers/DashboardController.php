@@ -30,7 +30,7 @@ class DashboardController extends Controller
         return Inertia::render('Dashboard', [
             'currency' => $currency,
             'availableCurrencies' => $availableCurrencies,
-            ...$this->dashboardService->getDashboardData($user, $currency),
+            ...$this->dashboardService->getDashboardData($user, $currency, $user->timezone),
         ]);
     }
 }

@@ -11,8 +11,8 @@ A Laravel + React personal finance application with AI-powered transaction manag
 
 ## Tech Stack
 
-- **Backend**: Laravel 11, PHP 8.2+, SQLite (default) / MySQL / PostgreSQL
-- **Frontend**: React 18, TypeScript, Inertia.js, Tailwind CSS v4
+- **Backend**: Laravel 12, PHP 8.2+, SQLite (default) / MySQL / PostgreSQL
+- **Frontend**: React 19, TypeScript, Inertia.js, Tailwind CSS v4
 - **AI**: OpenAI API (GPT-4o, GPT-4o-mini) or NVIDIA Nemotron
 - **Database**: SQLite (development), MySQL/PostgreSQL (production)
 
@@ -177,9 +177,9 @@ SANCTUM_STATEFUL_DOMAINS=localhost:3000
 
 ### Analytics Service (`app/Services/AnalyticsService.php`)
 
-Handles automatic aggregation of transaction data:
+Handles automatic aggregation of transaction data with user timezone support:
 
-- **Daily Analytics**: Tracks income/expense per user per day
+- **Daily Analytics**: Tracks income/expense per user per day (user's timezone)
 - **Monthly Analytics**: Aggregates monthly totals
 - **Yearly Analytics**: Year-long spending summaries
 - **Account Analytics**: Per-account daily tracking
@@ -235,6 +235,33 @@ php artisan test tests/Feature/TransactionTest.php
 # Run with coverage
 php artisan test --coverage
 ```
+
+## Artisan Commands
+
+### Make User
+
+Create a user via command line:
+
+```bash
+php artisan make:user "John Doe" john@example.com password123
+```
+
+### Analytics Refresh
+
+Clear all analytics data and recalculate from transactions:
+
+```bash
+# Refresh analytics for all users
+php artisan analytics:refresh
+
+# Refresh analytics for a specific user
+php artisan analytics:refresh --user-id=1
+```
+
+Use this command after:
+- Changing user timezone settings
+- Fixing analytics data corruption
+- Testing changes to analytics logic
 
 ## Linting & Formatting
 

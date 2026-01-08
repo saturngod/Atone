@@ -127,11 +127,16 @@ export default function Dashboard({
     }
 
     const chartData = trend.map((item) => {
-        // Handle both simple date strings (YYYY-MM-DD) and ISO datetime strings
+        // Parse the date and extract year, month, day to avoid timezone shifts
+        // The backend returns dates as strings in format "Y-m-d H:i:s" or "Y-m-d"
         const dateStr = String(item.date);
-        const date = dateStr.includes('T')
-            ? new Date(dateStr)
-            : new Date(dateStr + 'T00:00:00');
+        const datePart = dateStr.includes(' ')
+            ? dateStr.split(' ')[0]
+            : dateStr.split('T')[0];
+        const [year, month, day] = datePart.split('-').map(Number);
+
+        // Create date in local timezone at noon to avoid DST issues
+        const date = new Date(year, month - 1, day, 12, 0, 0);
 
         return {
             date: date.toLocaleDateString('en-US', {

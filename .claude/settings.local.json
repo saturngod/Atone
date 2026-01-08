@@ -5,7 +5,9 @@
       "Bash(php artisan test:*)",
       "Bash(vendor/bin/pint:*)",
       "Bash(npm run types:*)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "Bash(php artisan tinker:*)",
+      "Bash(php artisan analytics:refresh:*)"
     ]
   }
 }

@@ -13,9 +13,10 @@ class DashboardService
         private TransactionService $transactionService,
     ) {}
 
-    public function getDashboardData(User $user, string $currency): array
+    public function getDashboardData(User $user, string $currency, ?string $timezone = null): array
     {
-        $analytics = $this->analyticsService->getDashboardData($user, $currency);
+        $timezone = $timezone ?? $user->timezone ?? config('app.timezone');
+        $analytics = $this->analyticsService->getDashboardData($user, $currency, $timezone);
 
         return [
             'totalBalance' => $this->transactionService->getTotalBalance($user, $currency),
