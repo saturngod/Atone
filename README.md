@@ -263,6 +263,32 @@ Use this command after:
 - Fixing analytics data corruption
 - Testing changes to analytics logic
 
+### Generate Demo Data
+
+Generate realistic demo transaction data for testing and demos:
+
+```bash
+# Generate 300 transactions over the last 6 months (default)
+php artisan demo:generate
+
+# Customize the generation
+php artisan demo:generate --months=3         # Last 3 months
+php artisan demo:generate --transactions=50  # Only 50 transactions
+php artisan demo:generate --user=5           # For specific user ID
+```
+
+**Requires** `ALLOW_DEMO_SETUP=true` in `.env`:
+
+```env
+ALLOW_DEMO_SETUP=true
+```
+
+This command creates:
+- **4 Accounts**: Checking, Savings, Credit Card, Cash
+- **11 Categories**: Groceries, Dining Out, Transportation, etc.
+- **~40 Merchants**: Organized by category
+- **Transactions**: Random amounts with realistic distributions
+
 ## Linting & Formatting
 
 ```bash
