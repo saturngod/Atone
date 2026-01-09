@@ -33,14 +33,14 @@ class OpenAIService
             $accountContext = "User has these accounts:\n$accountContext\nIf account is mentioned, use its currency logic.";
         }
 
-        $timeContext = $this->getTimeContext($user);
+        $userContext = $this->getUserContext($user);
 
         $payload = [
             'model' => $this->model,
             'messages' => [
                 [
                     'role' => 'system',
-                    'content' => 'You are a financial transaction assistant. Extract transaction details from natural language and output ONLY valid JSON. Output format: {"account_name": "string", "category_name": "string", "amount": number, "description": "string", "merchant_name": "string|null", "date": "YYYY-MM-DD", "currency": "string|null"}. Rules: - Use "Entertainment" for games, movies, streaming. - Use "Food & Dining" for restaurants, coffee, groceries. - Use "Income" for salary, deposits. - Amount negative for expenses, positive for income. - Date in YYYY-MM-DD format. - merchant_name: extract if mentioned, else null. - currency: Extract explicit currency code (e.g. USD, MMK) if mentioned (e.g. "500 MMK"), otherwise null. '.$accountContext.' '.$timeContext,
+                    'content' => 'You are a financial transaction assistant. Extract transaction details from natural language and output ONLY valid JSON. Output format: {"account_name": "string", "category_name": "string", "amount": number, "description": "string", "merchant_name": "string|null", "date": "YYYY-MM-DD", "currency": "string|null"}. Rules: - Use "Entertainment" for games, movies, streaming. - Use "Food & Dining" for restaurants, coffee, groceries. - Use "Income" for salary, deposits. - Amount negative for expenses, positive for income. - Date in YYYY-MM-DD format. - merchant_name: extract if mentioned, else null. - currency: Extract explicit currency code (e.g. USD, MMK) if mentioned (e.g. "500 MMK"), otherwise null. '.$accountContext.' '.$userContext,
                 ],
                 ['role' => 'user', 'content' => $prompt],
             ],
@@ -84,15 +84,40 @@ class OpenAIService
 
     public function chatWithFunctions(User $user, string $prompt, array $conversationHistory = []): array
     {
-        $timeContext = $this->getTimeContext($user);
+        $userContext = $this->getUserContext($user);
+
+        // Build context about user's existing data
+        $accounts = $user->accounts()->get(['name', 'currency_code']);
+        $accountContext = $accounts->map(fn ($a) => "{$a->name} ({$a->currency_code})")->join(', ');
+
+        $categories = $user->categories()->pluck('name')->join(', ');
+        $merchants = $user->merchants()->pluck('name')->take(20)->join(', ');
+
+        $dataContext = '';
+        if ($accountContext) {
+            $dataContext .= "User's accounts: {$accountContext}. ";
+        }
+        if ($categories) {
+            $dataContext .= "User's categories: {$categories}. Use these exact category names when possible. ";
+        }
+        if ($merchants) {
+            $dataContext .= "User's existing merchants: {$merchants}. Reuse these names when the user mentions them. ";
+        }
 
         $messages = [
             [
                 'role' => 'system',
                 'content' => 'You are a financial assistant that helps users manage their personal finances. Use the available functions to answer queries about transactions, spending, income, and balances. When providing numerical results, always format them clearly with currency symbols. '.
-                'IMPORTANT: When creating transactions (create_transaction function), you MUST have ALL required information before calling the function: account_name, category_name, amount, description, and date. '.
-                'If ANY of these fields are missing from the user\'s input, ask the user to provide the missing information. DO NOT make up or guess any values. '.
-                'Be conversational and friendly when asking for missing details. For example: "How much was the coffee?" or "What date was this purchase?" or "Which account should I use?" '.$timeContext,
+                $dataContext.
+                'IMPORTANT: When creating transactions (create_transaction function), you MUST have ALL 6 required fields before calling the function: '.
+                '1. account_name - Which account to use. If user has only ONE account, use it automatically. If multiple, ask which one. '.
+                '2. amount - The transaction amount (negative for expenses, positive for income) '.
+                '3. description - Brief description of what the transaction is for '.
+                '4. date - The date of the transaction (use today if user says "today" or doesn\'t specify) '.
+                '5. category_name - REQUIRED. Auto-detect from context: "coffee/restaurant/groceries" -> "Food & Dining", "games/Netflix/movies/Steam" -> "Entertainment", "gas/Uber/taxi" -> "Transportation", "salary/paycheck/deposit" -> "Income", "electricity/water/internet" -> "Utilities", "rent/mortgage" -> "Housing", "doctor/pharmacy/medicine" -> "Healthcare", "shopping/clothes/Amazon" -> "Shopping". If you cannot detect the category, ASK the user. '.
+                '6. merchant_name - REQUIRED. Extract from the user\'s message (e.g., "Starbucks", "Amazon", "Steam", "Netflix", "Uber"). If the user mentions a store, company, or brand name, use it. If no merchant is mentioned and you cannot infer one, ASK the user: "Where did you make this purchase?" or "What\'s the name of the merchant/store?" '.
+                'DO NOT call create_transaction unless you have values for ALL 6 fields. If ANY field is missing and cannot be auto-detected, ask the user in a friendly, conversational way. '.
+                'Examples of asking: "What category would you like for this transaction?" or "Which store/merchant was this at?" or "How much did you spend?" '.$userContext,
             ],
             ...$conversationHistory,
             ['role' => 'user', 'content' => $prompt],
@@ -143,16 +168,20 @@ class OpenAIService
         ];
     }
 
-    private function getTimeContext(User $user): string
+    private function getUserContext(User $user): string
     {
         $timezone = $user->timezone ?? 'UTC';
+        $currencyCode = $user->currency_code ?? 'USD';
         $now = now($timezone);
 
         return sprintf(
-            'Current Date: %s. Current Time: %s. User Timezone: %s.',
+            'Current Date: %s. Current Time: %s. User Timezone: %s. User Default Currency: %s. '.
+            'When the user mentions amounts without a currency symbol (e.g., "50" instead of "$50"), assume they mean %s.',
             $now->format('Y-m-d'),
             $now->format('H:i:s'),
-            $timezone
+            $timezone,
+            $currencyCode,
+            $currencyCode
         );
     }
 
@@ -176,38 +205,39 @@ class OpenAIService
             'function' => [
                 'name' => 'create_transaction',
                 'description' => 'Create a new transaction from natural language description. Use this when the user wants to add a new expense or income entry. '.
-                    'CRITICAL: Only call this function when you have ALL required information from the user. '.
-                    'If the user provides incomplete information (missing amount, date, account, category, or description), ask them for the missing details first. '.
-                    'DO NOT make up or guess any values. The user must provide all information.',
+                    'CRITICAL: Only call this function when you have ALL 6 required fields. '.
+                    'The 6 required fields are: account_name, amount, description, date, category_name, and merchant_name. '.
+                    'If ANY field is missing and cannot be auto-detected from context, you MUST ask the user for it before calling this function. '.
+                    'DO NOT make up or guess values. Auto-detect category and merchant from context when possible.',
                 'parameters' => [
                     'type' => 'object',
                     'properties' => [
                         'account_name' => [
                             'type' => 'string',
-                            'description' => 'The name of the account used for the transaction. Ask if user does not specify.',
+                            'description' => 'The name of the account used for the transaction. REQUIRED. Ask the user if not specified.',
                         ],
                         'category_name' => [
                             'type' => 'string',
-                            'description' => 'The name of the category for the transaction. Ask if user does not specify.',
+                            'description' => 'The category for the transaction. REQUIRED. Auto-detect based on context: "coffee/restaurant/groceries" -> "Food & Dining", "games/Netflix/movies/Steam" -> "Entertainment", "gas/Uber/taxi" -> "Transportation", "salary/paycheck" -> "Income", "utilities/electricity/water" -> "Utilities", "rent/mortgage" -> "Housing", "doctor/pharmacy" -> "Healthcare", "shopping/clothes" -> "Shopping". If you cannot detect it, ASK the user.',
                         ],
                         'amount' => [
                             'type' => 'number',
-                            'description' => 'The transaction amount (positive for income, negative for expense). Ask if user does not specify.',
+                            'description' => 'The transaction amount. REQUIRED. Positive for income, negative for expense. Ask the user if not specified.',
                         ],
                         'description' => [
                             'type' => 'string',
-                            'description' => 'A brief description of the transaction. Use the user\'s description if provided.',
+                            'description' => 'A brief description of the transaction. REQUIRED. Use the user\'s description or generate a concise one.',
                         ],
                         'merchant_name' => [
-                            'type' => ['string', 'null'],
-                            'description' => 'The name of the merchant/store (e.g., "Starbucks", "Steam", "Apple"). Extract from prompt if mentioned, otherwise null',
+                            'type' => 'string',
+                            'description' => 'The name of the merchant/store/company. REQUIRED. Extract from the user\'s message (e.g., "Starbucks", "Steam", "Amazon", "Netflix", "Uber", "Walmart"). If no merchant is mentioned, ASK the user: "Where did you make this purchase?" or "What\'s the name of the store/merchant?"',
                         ],
                         'date' => [
                             'type' => 'string',
-                            'description' => 'The date of the transaction in YYYY-MM-DD format. Use today\'s date if not specified by user.',
+                            'description' => 'The date of the transaction in YYYY-MM-DD format. REQUIRED. Use today\'s date if not specified by user or if user says "today".',
                         ],
                     ],
-                    'required' => ['account_name', 'category_name', 'amount', 'description', 'date'],
+                    'required' => ['account_name', 'category_name', 'amount', 'description', 'merchant_name', 'date'],
                 ],
             ],
         ];
@@ -257,7 +287,7 @@ class OpenAIService
             'type' => 'function',
             'function' => [
                 'name' => 'get_spending_summary',
-                'description' => 'Get total spending or income summary for a time period. Use for queries like "how much did I spend this month", "total income this week", etc.',
+                'description' => 'Get total spending or income summary for a time period. Use for queries like "how much did I spend this month", "total income this week", "how much did I spend at Starbucks", etc.',
                 'parameters' => [
                     'type' => 'object',
                     'properties' => [
@@ -271,6 +301,7 @@ class OpenAIService
                         ],
                         'category_name' => $this->nullableString('Optional category filter. If provided, returns spending only for that category.'),
                         'account_name' => $this->nullableString('Optional account filter. If provided, returns spending only for that account.'),
+                        'merchant_name' => $this->nullableString('Optional merchant filter. If provided, returns spending only for that merchant. E.g., "Starbucks", "Steam", "Apple".'),
                     ],
                     'required' => [],
                 ],

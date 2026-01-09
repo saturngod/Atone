@@ -9,33 +9,33 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import AppLayout from '@/layouts/app-layout';
-import categories from '@/routes/categories';
+import merchants from '@/routes/merchants';
 import { type BreadcrumbItem } from '@/types';
 import { Head, useForm } from '@inertiajs/react';
 import { Pencil, Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 
-interface Category {
+interface Merchant {
     id: number;
     name: string;
 }
 
 interface PageProps {
-    categories: Category[];
+    merchants: Merchant[];
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
-        title: 'Categories',
-        href: categories.index().url,
+        title: 'Merchants',
+        href: merchants.index().url,
     },
 ];
 
-export default function CategoriesIndex({
-    categories: categoriesList,
+export default function MerchantsIndex({
+    merchants: merchantsList,
 }: PageProps) {
     const [isDialogOpen, setIsDialogOpen] = useState(false);
-    const [editingCategory, setEditingCategory] = useState<Category | null>(
+    const [editingMerchant, setEditingMerchant] = useState<Merchant | null>(
         null,
     );
 
@@ -47,16 +47,16 @@ export default function CategoriesIndex({
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (editingCategory) {
-            form.put(`/categories/${editingCategory.id}`, {
+        if (editingMerchant) {
+            form.put(`/merchants/${editingMerchant.id}`, {
                 onSuccess: () => {
                     setIsDialogOpen(false);
-                    setEditingCategory(null);
+                    setEditingMerchant(null);
                     form.reset();
                 },
             });
         } else {
-            form.post('/categories', {
+            form.post('/merchants', {
                 onSuccess: () => {
                     setIsDialogOpen(false);
                     form.reset();
@@ -65,32 +65,32 @@ export default function CategoriesIndex({
         }
     };
 
-    const handleEdit = (category: Category) => {
-        setEditingCategory(category);
-        form.setData({ name: category.name });
+    const handleEdit = (merchant: Merchant) => {
+        setEditingMerchant(merchant);
+        form.setData({ name: merchant.name });
         setIsDialogOpen(true);
     };
 
     const handleDelete = (id: number) => {
-        if (confirm('Are you sure you want to delete this category?')) {
-            deleteForm.delete(`/categories/${id}`);
+        if (confirm('Are you sure you want to delete this merchant?')) {
+            deleteForm.delete(`/merchants/${id}`);
         }
     };
 
     const handleDialogChange = (open: boolean) => {
         setIsDialogOpen(open);
         if (!open) {
-            setEditingCategory(null);
+            setEditingMerchant(null);
             form.reset();
         }
     };
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Categories" />
+            <Head title="Merchants" />
             <div className="container mx-auto max-w-4xl px-4 py-10 md:px-0">
                 <div className="mb-6 flex items-center justify-between">
-                    <h1 className="text-3xl font-bold">Categories</h1>
+                    <h1 className="text-3xl font-bold">Merchants</h1>
                     <Dialog
                         open={isDialogOpen}
                         onOpenChange={handleDialogChange}
@@ -98,15 +98,15 @@ export default function CategoriesIndex({
                         <DialogTrigger asChild>
                             <Button>
                                 <Plus className="mr-2 h-4 w-4" />
-                                Add Category
+                                Add Merchant
                             </Button>
                         </DialogTrigger>
                         <DialogContent>
                             <DialogHeader>
                                 <DialogTitle>
-                                    {editingCategory
-                                        ? 'Edit Category'
-                                        : 'Create Category'}
+                                    {editingMerchant
+                                        ? 'Edit Merchant'
+                                        : 'Create Merchant'}
                                 </DialogTitle>
                             </DialogHeader>
                             <form onSubmit={handleSubmit} className="space-y-4">
@@ -119,7 +119,7 @@ export default function CategoriesIndex({
                                         onChange={(e) =>
                                             form.setData('name', e.target.value)
                                         }
-                                        placeholder="e.g., Food, Transport"
+                                        placeholder="e.g., Amazon, Starbucks"
                                         required
                                     />
                                 </div>
@@ -135,7 +135,7 @@ export default function CategoriesIndex({
                                         type="submit"
                                         disabled={form.processing}
                                     >
-                                        {editingCategory ? 'Update' : 'Create'}
+                                        {editingMerchant ? 'Update' : 'Create'}
                                     </Button>
                                 </div>
                             </form>
@@ -143,25 +143,25 @@ export default function CategoriesIndex({
                     </Dialog>
                 </div>
 
-                {categoriesList.length === 0 ? (
+                {merchantsList.length === 0 ? (
                     <div className="py-10 text-center">
                         <p className="text-muted-foreground">
-                            No categories yet. Create your first category!
+                            No merchants yet. Create your first merchant!
                         </p>
                     </div>
                 ) : (
                     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                        {categoriesList.map((category) => (
-                            <Card key={category.id}>
+                        {merchantsList.map((merchant) => (
+                            <Card key={merchant.id}>
                                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                                     <CardTitle className="text-sm font-medium">
-                                        {category.name}
+                                        {merchant.name}
                                     </CardTitle>
                                     <div className="flex gap-1">
                                         <Button
                                             variant="ghost"
                                             size="icon"
-                                            onClick={() => handleEdit(category)}
+                                            onClick={() => handleEdit(merchant)}
                                         >
                                             <Pencil className="h-4 w-4" />
                                         </Button>
@@ -169,7 +169,7 @@ export default function CategoriesIndex({
                                             variant="ghost"
                                             size="icon"
                                             onClick={() =>
-                                                handleDelete(category.id)
+                                                handleDelete(merchant.id)
                                             }
                                         >
                                             <Trash2 className="h-4 w-4" />
@@ -178,7 +178,7 @@ export default function CategoriesIndex({
                                 </CardHeader>
                                 <CardContent>
                                     <p className="text-sm text-muted-foreground">
-                                        Edit or delete this category
+                                        Edit or delete this merchant
                                     </p>
                                 </CardContent>
                             </Card>

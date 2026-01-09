@@ -14,7 +14,6 @@ class CategoryService
     public function getCategoriesForUser(User $user): Collection
     {
         return $user->categories()
-            ->withCount('transactions')
             ->orderBy('name')
             ->get();
     }

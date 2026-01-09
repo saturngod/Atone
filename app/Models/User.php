@@ -50,6 +50,11 @@ class User extends Authenticatable
         return $this->hasMany(Category::class);
     }
 
+    public function merchants(): HasMany
+    {
+        return $this->hasMany(Merchant::class);
+    }
+
     public function transactions(): HasMany
     {
         return $this->hasMany(Transaction::class);

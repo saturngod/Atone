@@ -42,6 +42,14 @@ class TransactionController extends Controller
                     'id' => $category->id,
                     'name' => $category->name,
                 ]),
+            'merchants' => $user->merchants()
+                ->select('id', 'name')
+                ->orderBy('name')
+                ->get()
+                ->map(fn ($merchant) => [
+                    'id' => $merchant->id,
+                    'name' => $merchant->name,
+                ]),
         ]);
     }
 

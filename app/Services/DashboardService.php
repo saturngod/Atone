@@ -25,6 +25,7 @@ class DashboardService
             'thisYear' => $analytics['thisYear'],
             'byAccount' => $analytics['byAccount'],
             'byCategory' => $analytics['byCategory'],
+            'byMerchant' => $analytics['byMerchant'],
             'trend' => $analytics['trend'],
             'recentTransactions' => $this->transactionService->getRecentTransactions($user, $currency),
         ];

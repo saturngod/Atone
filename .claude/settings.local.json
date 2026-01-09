@@ -7,7 +7,12 @@
       "Bash(npm run types:*)",
       "Bash(npm install:*)",
       "Bash(php artisan tinker:*)",
-      "Bash(php artisan analytics:refresh:*)"
+      "Bash(php artisan analytics:refresh:*)",
+      "Bash(php artisan make:migration:*)",
+      "Bash(php artisan migrate:*)",
+      "Bash(php artisan make:model:*)",
+      "Bash(php artisan wayfinder:generate:*)",
+      "Bash(npm run format:*)"
     ]
   }
 }

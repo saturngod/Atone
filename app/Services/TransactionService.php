@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Models\Merchant;
 use App\Models\Transaction;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;
@@ -13,7 +14,7 @@ class TransactionService
     public function getTransactionsForUser(User $user): Collection
     {
         return $user->transactions()
-            ->with(['account', 'category'])
+            ->with(['account', 'category', 'merchant'])
             ->orderBy('date', 'desc')
             ->orderBy('created_at', 'desc')
             ->get();
@@ -23,7 +24,7 @@ class TransactionService
     {
         return $user->transactions()
             ->whereHas('account', fn ($query) => $query->where('currency_code', $currency))
-            ->with(['account', 'category'])
+            ->with(['account', 'category', 'merchant'])
             ->orderBy('date', 'desc')
             ->limit($limit)
             ->get();
@@ -40,9 +41,16 @@ class TransactionService
             $categoryId = (int) $data['category_id'];
         }
 
+        $merchantId = null;
+        if (! empty($data['merchant_name'])) {
+            $merchant = $user->merchants()->firstOrCreate(['name' => $data['merchant_name']]);
+            $merchantId = $merchant->id;
+        }
+
         return $user->transactions()->create([
             'account_id' => (int) $data['account_id'],
             'category_id' => $categoryId,
+            'merchant_id' => $merchantId,
             'amount' => (float) $data['amount'],
             'description' => $data['description'],
             'date' => $data['date'],
@@ -51,9 +59,18 @@ class TransactionService
 
     public function updateTransaction(Transaction $transaction, array $data): bool
     {
+        $merchantId = null;
+        if (! empty($data['merchant_name'])) {
+            $merchant = Merchant::firstOrCreate(
+                ['user_id' => $transaction->user_id, 'name' => $data['merchant_name']]
+            );
+            $merchantId = $merchant->id;
+        }
+
         return $transaction->update([
             'account_id' => (int) $data['account_id'],
             'category_id' => ! empty($data['category_id']) ? (int) $data['category_id'] : null,
+            'merchant_id' => $merchantId,
             'amount' => (float) $data['amount'],
             'description' => $data['description'],
             'date' => $data['date'],

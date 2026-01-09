@@ -24,18 +24,20 @@ class TransactionObserver
 
         $amountChanged = $transaction->amount !== ($original['amount'] ?? null);
         $dateChanged = $transaction->date !== ($original['date'] ?? null);
+        $categoryChanged = $transaction->category_id !== ($original['category_id'] ?? null);
+        $merchantChanged = $transaction->merchant_id !== ($original['merchant_id'] ?? null);
 
-        if (! $amountChanged && ! $dateChanged) {
+        if (! $amountChanged && ! $dateChanged && ! $categoryChanged && ! $merchantChanged) {
             return;
         }
 
         $oldTransaction = null;
-        if ($amountChanged || $dateChanged) {
+        if ($amountChanged || $dateChanged || $categoryChanged || $merchantChanged) {
             $oldTransaction = new Transaction;
             $oldTransaction->user_id = $transaction->user_id;
             $oldTransaction->account_id = $original['account_id'];
             $oldTransaction->category_id = $original['category_id'];
-            $oldTransaction->merchant_id = $original['merchant_id'];
+            $oldTransaction->merchant_id = $original['merchant_id'] ?? null;
             $oldTransaction->amount = $original['amount'];
             $oldTransaction->date = $original['date'];
             $oldTransaction->description = $original['description'];

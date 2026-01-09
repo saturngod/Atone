@@ -1,6 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useTimezone } from '@/hooks/use-timezone';
 import { useForm } from '@inertiajs/react';
 import { Plus } from 'lucide-react';
 import { useState } from 'react';
@@ -16,29 +17,58 @@ interface Category {
     name: string;
 }
 
+interface Merchant {
+    id: number;
+    name: string;
+}
+
 interface TransactionFormProps {
     accounts: Account[];
     categories: Category[];
+    merchants: Merchant[];
+}
+
+// Get current date in user's timezone as YYYY-MM-DD
+function getCurrentDateInTimezone(timezone: string): string {
+    const now = new Date();
+    const formatter = new Intl.DateTimeFormat('en-CA', {
+        // en-CA gives YYYY-MM-DD format
+        timeZone: timezone,
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+    });
+    return formatter.format(now);
 }
 
 export default function TransactionForm({
     accounts,
     categories,
+    merchants,
 }: TransactionFormProps) {
+    const timezone = useTimezone();
     const [categorySearch, setCategorySearch] = useState('');
-    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
     const [newCategoryName, setNewCategoryName] = useState<string | null>(null);
+    const [merchantSearch, setMerchantSearch] = useState('');
+    const [isMerchantDropdownOpen, setIsMerchantDropdownOpen] = useState(false);
+    const [newMerchantName, setNewMerchantName] = useState<string | null>(null);
 
     const form = useForm({
         account_id: accounts[0]?.id?.toString() || '',
         category_name: '',
+        merchant_name: '',
         amount: '',
         description: '',
-        date: new Date().toISOString().split('T')[0],
+        date: getCurrentDateInTimezone(timezone),
     });
 
     const filteredCategories = categories.filter((category) =>
         category.name.toLowerCase().includes(categorySearch.toLowerCase()),
+    );
+
+    const filteredMerchants = merchants.filter((merchant) =>
+        merchant.name.toLowerCase().includes(merchantSearch.toLowerCase()),
     );
 
     const handleCategorySelect = (categoryId: string) => {
@@ -48,12 +78,12 @@ export default function TransactionForm({
             form.setData('category_name', category.name);
         }
         setNewCategoryName(null);
-        setIsDropdownOpen(false);
+        setIsCategoryDropdownOpen(false);
     };
 
     const handleCategoryInputChange = (value: string) => {
         setCategorySearch(value);
-        setIsDropdownOpen(true);
+        setIsCategoryDropdownOpen(true);
         form.setData('category_name', value);
 
         if (!value.trim()) {
@@ -72,13 +102,47 @@ export default function TransactionForm({
         }
     };
 
+    const handleMerchantSelect = (merchantId: string) => {
+        const merchant = merchants.find((m) => m.id.toString() === merchantId);
+        if (merchant) {
+            setMerchantSearch(merchant.name);
+            form.setData('merchant_name', merchant.name);
+        }
+        setNewMerchantName(null);
+        setIsMerchantDropdownOpen(false);
+    };
+
+    const handleMerchantInputChange = (value: string) => {
+        setMerchantSearch(value);
+        setIsMerchantDropdownOpen(true);
+        form.setData('merchant_name', value);
+
+        if (!value.trim()) {
+            setNewMerchantName(null);
+            return;
+        }
+
+        const exists = merchants.some(
+            (m) => m.name.toLowerCase() === value.toLowerCase(),
+        );
+
+        if (!exists) {
+            setNewMerchantName(value.trim());
+        } else {
+            setNewMerchantName(null);
+        }
+    };
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         form.post('/transactions', {
             onSuccess: () => {
                 form.reset();
                 setNewCategoryName(null);
-                form.setData('date', new Date().toISOString().split('T')[0]);
+                setNewMerchantName(null);
+                setCategorySearch('');
+                setMerchantSearch('');
+                form.setData('date', getCurrentDateInTimezone(timezone));
             },
         });
     };
@@ -91,7 +155,7 @@ export default function TransactionForm({
             <div className="mb-4 text-xl font-semibold">
                 Quick Add Transaction
             </div>
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-6">
                 <div className="lg:col-span-1">
                     <Label htmlFor="amount">Amount</Label>
                     <div className="relative mt-1">
@@ -126,14 +190,17 @@ export default function TransactionForm({
                             onChange={(e) =>
                                 handleCategoryInputChange(e.target.value)
                             }
-                            onFocus={() => setIsDropdownOpen(true)}
+                            onFocus={() => setIsCategoryDropdownOpen(true)}
                             onBlur={() =>
-                                setTimeout(() => setIsDropdownOpen(false), 200)
+                                setTimeout(
+                                    () => setIsCategoryDropdownOpen(false),
+                                    200,
+                                )
                             }
                         />
-                        {categorySearch &&
-                            !newCategoryName &&
-                            isDropdownOpen && (
+                        {filteredCategories.length > 0 &&
+                            categorySearch &&
+                            isCategoryDropdownOpen && (
                                 <div className="absolute z-10 mt-1 max-h-32 w-full overflow-auto rounded-md border bg-background shadow-md">
                                     {filteredCategories.map((category) => (
                                         <button
@@ -165,6 +232,54 @@ export default function TransactionForm({
                             {form.errors.category_name}
                         </p>
                     )}
+                </div>
+
+                <div className="lg:col-span-1">
+                    <Label>Merchant</Label>
+                    <div className="relative mt-1">
+                        <Input
+                            placeholder="Optional..."
+                            value={merchantSearch}
+                            onChange={(e) =>
+                                handleMerchantInputChange(e.target.value)
+                            }
+                            onFocus={() => setIsMerchantDropdownOpen(true)}
+                            onBlur={() =>
+                                setTimeout(
+                                    () => setIsMerchantDropdownOpen(false),
+                                    200,
+                                )
+                            }
+                        />
+                        {filteredMerchants.length > 0 &&
+                            merchantSearch &&
+                            isMerchantDropdownOpen && (
+                                <div className="absolute z-10 mt-1 max-h-32 w-full overflow-auto rounded-md border bg-background shadow-md">
+                                    {filteredMerchants.map((merchant) => (
+                                        <button
+                                            key={merchant.id}
+                                            type="button"
+                                            className="w-full px-3 py-2 text-left hover:bg-accent hover:text-accent-foreground"
+                                            onClick={() =>
+                                                handleMerchantSelect(
+                                                    merchant.id.toString(),
+                                                )
+                                            }
+                                        >
+                                            {merchant.name}
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+                        {newMerchantName && (
+                            <div className="mt-1 flex items-center gap-1 text-sm text-green-600">
+                                <Plus className="h-3 w-3" />
+                                <span>
+                                    Create &quot;{newMerchantName}&quot;
+                                </span>
+                            </div>
+                        )}
+                    </div>
                 </div>
 
                 <div>

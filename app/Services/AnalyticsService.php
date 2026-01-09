@@ -5,8 +5,15 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Models\AnalyticsAccountDaily;
+use App\Models\AnalyticsAccountMonthly;
+use App\Models\AnalyticsAccountYearly;
 use App\Models\AnalyticsCategoryDaily;
+use App\Models\AnalyticsCategoryMonthly;
+use App\Models\AnalyticsCategoryYearly;
 use App\Models\AnalyticsDaily;
+use App\Models\AnalyticsMerchantDaily;
+use App\Models\AnalyticsMerchantMonthly;
+use App\Models\AnalyticsMerchantYearly;
 use App\Models\AnalyticsMonthly;
 use App\Models\AnalyticsYearly;
 use App\Models\Transaction;
@@ -44,10 +51,20 @@ class AnalyticsService
 
         if ($transaction->account_id) {
             $this->updateAccountDaily($userId, $transaction->account_id, $date, $currency, $isIncome ? $amount : 0, $isIncome ? 0 : $amount);
+            $this->updateAccountMonthly($userId, $transaction->account_id, $date->year, $date->month, $currency, $isIncome ? $amount : 0, $isIncome ? 0 : $amount);
+            $this->updateAccountYearly($userId, $transaction->account_id, $date->year, $currency, $isIncome ? $amount : 0, $isIncome ? 0 : $amount);
         }
 
         if ($transaction->category_id) {
             $this->updateCategoryDaily($userId, $transaction->category_id, $date, $currency, $amount);
+            $this->updateCategoryMonthly($userId, $transaction->category_id, $date->year, $date->month, $currency, $amount);
+            $this->updateCategoryYearly($userId, $transaction->category_id, $date->year, $currency, $amount);
+        }
+
+        if ($transaction->merchant_id) {
+            $this->updateMerchantDaily($userId, $transaction->merchant_id, $date, $currency, $amount);
+            $this->updateMerchantMonthly($userId, $transaction->merchant_id, $date->year, $date->month, $currency, $amount);
+            $this->updateMerchantYearly($userId, $transaction->merchant_id, $date->year, $currency, $amount);
         }
     }
 
@@ -65,10 +82,20 @@ class AnalyticsService
 
         if ($transaction->account_id) {
             $this->updateAccountDaily($userId, $transaction->account_id, $date, $currency, $isIncome ? -$amount : 0, $isIncome ? 0 : -$amount);
+            $this->updateAccountMonthly($userId, $transaction->account_id, $date->year, $date->month, $currency, $isIncome ? -$amount : 0, $isIncome ? 0 : -$amount);
+            $this->updateAccountYearly($userId, $transaction->account_id, $date->year, $currency, $isIncome ? -$amount : 0, $isIncome ? 0 : -$amount);
         }
 
         if ($transaction->category_id) {
             $this->updateCategoryDaily($userId, $transaction->category_id, $date, $currency, -$amount);
+            $this->updateCategoryMonthly($userId, $transaction->category_id, $date->year, $date->month, $currency, -$amount);
+            $this->updateCategoryYearly($userId, $transaction->category_id, $date->year, $currency, -$amount);
+        }
+
+        if ($transaction->merchant_id) {
+            $this->updateMerchantDaily($userId, $transaction->merchant_id, $date, $currency, -$amount);
+            $this->updateMerchantMonthly($userId, $transaction->merchant_id, $date->year, $date->month, $currency, -$amount);
+            $this->updateMerchantYearly($userId, $transaction->merchant_id, $date->year, $currency, -$amount);
         }
     }
 
@@ -169,6 +196,132 @@ class AnalyticsService
         );
     }
 
+    private function updateMerchantDaily(int $userId, int $merchantId, Carbon $date, string $currency, float $amountChange): void
+    {
+        $dateStr = $date->toDateString();
+
+        AnalyticsMerchantDaily::upsert(
+            [
+                'user_id' => $userId,
+                'merchant_id' => $merchantId,
+                'date' => $dateStr,
+                'currency' => $currency,
+                'amount' => $amountChange,
+            ],
+            ['user_id', 'merchant_id', 'date', 'currency'],
+            [
+                'amount' => DB::raw("analytics_merchant_daily.amount + $amountChange"),
+            ]
+        );
+    }
+
+    private function updateAccountMonthly(int $userId, int $accountId, int $year, int $month, string $currency, float $incomeChange, float $expenseChange): void
+    {
+        AnalyticsAccountMonthly::upsert(
+            [
+                'user_id' => $userId,
+                'account_id' => $accountId,
+                'year' => $year,
+                'month' => $month,
+                'income' => $incomeChange,
+                'expense' => $expenseChange,
+            ],
+            ['user_id', 'account_id', 'year', 'month'],
+            [
+                'income' => DB::raw("analytics_account_monthly.income + $incomeChange"),
+                'expense' => DB::raw("analytics_account_monthly.expense + $expenseChange"),
+            ]
+        );
+    }
+
+    private function updateAccountYearly(int $userId, int $accountId, int $year, string $currency, float $incomeChange, float $expenseChange): void
+    {
+        AnalyticsAccountYearly::upsert(
+            [
+                'user_id' => $userId,
+                'account_id' => $accountId,
+                'year' => $year,
+                'income' => $incomeChange,
+                'expense' => $expenseChange,
+            ],
+            ['user_id', 'account_id', 'year'],
+            [
+                'income' => DB::raw("analytics_account_yearly.income + $incomeChange"),
+                'expense' => DB::raw("analytics_account_yearly.expense + $expenseChange"),
+            ]
+        );
+    }
+
+    private function updateCategoryMonthly(int $userId, int $categoryId, int $year, int $month, string $currency, float $amountChange): void
+    {
+        AnalyticsCategoryMonthly::upsert(
+            [
+                'user_id' => $userId,
+                'category_id' => $categoryId,
+                'year' => $year,
+                'month' => $month,
+                'currency' => $currency,
+                'amount' => $amountChange,
+            ],
+            ['user_id', 'category_id', 'year', 'month', 'currency'],
+            [
+                'amount' => DB::raw("analytics_category_monthly.amount + $amountChange"),
+            ]
+        );
+    }
+
+    private function updateCategoryYearly(int $userId, int $categoryId, int $year, string $currency, float $amountChange): void
+    {
+        AnalyticsCategoryYearly::upsert(
+            [
+                'user_id' => $userId,
+                'category_id' => $categoryId,
+                'year' => $year,
+                'currency' => $currency,
+                'amount' => $amountChange,
+            ],
+            ['user_id', 'category_id', 'year', 'currency'],
+            [
+                'amount' => DB::raw("analytics_category_yearly.amount + $amountChange"),
+            ]
+        );
+    }
+
+    private function updateMerchantMonthly(int $userId, int $merchantId, int $year, int $month, string $currency, float $amountChange): void
+    {
+        AnalyticsMerchantMonthly::upsert(
+            [
+                'user_id' => $userId,
+                'merchant_id' => $merchantId,
+                'year' => $year,
+                'month' => $month,
+                'currency' => $currency,
+                'amount' => $amountChange,
+            ],
+            ['user_id', 'merchant_id', 'year', 'month', 'currency'],
+            [
+                'amount' => DB::raw("analytics_merchant_monthly.amount + $amountChange"),
+            ]
+        );
+    }
+
+    private function updateMerchantYearly(int $userId, int $merchantId, int $year, string $currency, float $amountChange): void
+    {
+        AnalyticsMerchantYearly::upsert(
+            [
+                'user_id' => $userId,
+                'merchant_id' => $merchantId,
+                'year' => $year,
+                'currency' => $currency,
+                'amount' => $amountChange,
+            ],
+            ['user_id', 'merchant_id', 'year', 'currency'],
+            [
+                'amount' => DB::raw("analytics_merchant_yearly.amount + $amountChange"),
+            ]
+        );
+    }
+
     private function atomicUpdate(string $modelClass, array $keys, array $changes): void
     {
         $maxRetries = 5;
@@ -199,7 +352,7 @@ class AnalyticsService
     public function populateAll(User $user): void
     {
         $transactions = $user->transactions()
-            ->with(['account', 'category'])
+            ->with(['account', 'category', 'merchant'])
             ->get();
 
         foreach ($transactions as $transaction) {
@@ -252,6 +405,16 @@ class AnalyticsService
             ->orderByDesc('total')
             ->get();
 
+        $monthlyByMerchant = AnalyticsMerchantDaily::where('analytics_merchant_daily.user_id', $user->id)
+            ->whereBetween('analytics_merchant_daily.date', [$startOfMonth, $today])
+            ->where('analytics_merchant_daily.currency', $currency)
+            ->join('merchants', 'analytics_merchant_daily.merchant_id', '=', 'merchants.id')
+            ->select('merchants.name')
+            ->selectRaw('SUM(analytics_merchant_daily.amount) as total')
+            ->groupBy('analytics_merchant_daily.merchant_id')
+            ->orderByDesc('total')
+            ->get();
+
         $incomeTrend = AnalyticsDaily::where('user_id', $user->id)
             ->where('date', '>=', $nowInTimezone->copy()->subDays(30)->toDateString())
             ->where('currency', $currency)
@@ -278,6 +441,7 @@ class AnalyticsService
             ],
             'byAccount' => $monthlyByAccount,
             'byCategory' => $monthlyByCategory,
+            'byMerchant' => $monthlyByMerchant,
             'trend' => $incomeTrend,
         ];
     }

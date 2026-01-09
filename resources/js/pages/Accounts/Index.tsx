@@ -1,4 +1,3 @@
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -263,13 +262,20 @@ export default function AccountsIndex({
                                     </div>
                                 </CardHeader>
                                 <CardContent>
-                                    <Badge
-                                        style={{
-                                            backgroundColor: account.color,
-                                        }}
-                                    >
-                                        {account.color}
-                                    </Badge>
+                                    <div className="flex items-center gap-2">
+                                        <div
+                                            className="h-3 w-3 rounded-full"
+                                            style={{
+                                                backgroundColor: account.color,
+                                            }}
+                                        />
+                                        <span className="text-xs text-muted-foreground">
+                                            {account.color}
+                                        </span>
+                                    </div>
+                                    <p className="mt-2 text-sm text-muted-foreground">
+                                        Edit or delete this account
+                                    </p>
                                 </CardContent>
                             </Card>
                         ))}

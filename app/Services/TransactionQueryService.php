@@ -21,9 +21,12 @@ class TransactionQueryService
             ['color' => '#3B82F6']
         );
 
-        $category = Category::firstOrCreate(
-            ['user_id' => $user->id, 'name' => $arguments['category_name']]
-        );
+        $category = null;
+        if (! empty($arguments['category_name'])) {
+            $category = Category::firstOrCreate(
+                ['user_id' => $user->id, 'name' => $arguments['category_name']]
+            );
+        }
 
         $merchant = null;
         if (! empty($arguments['merchant_name'])) {
@@ -35,7 +38,7 @@ class TransactionQueryService
         return Transaction::create([
             'user_id' => $user->id,
             'account_id' => $account->id,
-            'category_id' => $category->id,
+            'category_id' => $category?->id,
             'merchant_id' => $merchant?->id,
             'amount' => $arguments['amount'],
             'description' => $arguments['description'],

@@ -19,6 +19,7 @@ class TransactionStoreRequest extends FormRequest
             'account_id' => ['required', 'exists:accounts,id'],
             'category_id' => ['nullable', 'exists:categories,id'],
             'category_name' => ['nullable', 'string', 'max:255'],
+            'merchant_name' => ['nullable', 'string', 'max:255'],
             'amount' => ['required', 'numeric'],
             'description' => ['nullable', 'string', 'max:255'],
             'date' => ['required', 'date'],

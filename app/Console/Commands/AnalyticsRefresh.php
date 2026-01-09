@@ -81,7 +81,14 @@ final class AnalyticsRefresh extends Command
             DB::table('analytics_monthly')->where('user_id', $userId)->delete();
             DB::table('analytics_yearly')->where('user_id', $userId)->delete();
             DB::table('analytics_account_daily')->where('user_id', $userId)->delete();
+            DB::table('analytics_account_monthly')->where('user_id', $userId)->delete();
+            DB::table('analytics_account_yearly')->where('user_id', $userId)->delete();
             DB::table('analytics_category_daily')->where('user_id', $userId)->delete();
+            DB::table('analytics_category_monthly')->where('user_id', $userId)->delete();
+            DB::table('analytics_category_yearly')->where('user_id', $userId)->delete();
+            DB::table('analytics_merchant_daily')->where('user_id', $userId)->delete();
+            DB::table('analytics_merchant_monthly')->where('user_id', $userId)->delete();
+            DB::table('analytics_merchant_yearly')->where('user_id', $userId)->delete();
 
             // Recalculate from transactions
             $user = User::find($userId);

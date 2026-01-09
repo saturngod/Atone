@@ -4,6 +4,7 @@ use App\Http\Controllers\AccountController;
 use App\Http\Controllers\AIController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\MerchantController;
 use App\Http\Controllers\TransactionController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -30,6 +31,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/', [CategoryController::class, 'store'])->name('store');
         Route::put('/{category}', [CategoryController::class, 'update'])->name('update');
         Route::delete('/{category}', [CategoryController::class, 'destroy'])->name('destroy');
+    });
+
+    Route::prefix('merchants')->name('merchants.')->group(function () {
+        Route::get('/', [MerchantController::class, 'index'])->name('index');
+        Route::post('/', [MerchantController::class, 'store'])->name('store');
+        Route::put('/{merchant}', [MerchantController::class, 'update'])->name('update');
+        Route::delete('/{merchant}', [MerchantController::class, 'destroy'])->name('destroy');
     });
 
     Route::prefix('transactions')->name('transactions.')->group(function () {
