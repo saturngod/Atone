@@ -32,8 +32,20 @@ class TransactionController extends Controller
             'merchant_id',
         ]);
 
+        $transactions = $this->transactionService->getTransactionsForUser($user, $filters);
+
         return Inertia::render('Transactions/Index', [
-            'transactions' => $this->transactionService->getTransactionsForUser($user, $filters),
+            'transactions' => [
+                'data' => $transactions->items(),
+                'links' => $transactions->linkCollection()->toArray(),
+                'meta' => [
+                    'current_page' => $transactions->currentPage(),
+                    'last_page' => $transactions->lastPage(),
+                    'from' => $transactions->firstItem(),
+                    'to' => $transactions->lastItem(),
+                    'total' => $transactions->total(),
+                ],
+            ],
             'summary' => $this->transactionService->getTransactionSummary($user, $filters),
             'filters' => $filters,
             'accounts' => $user->accounts()
