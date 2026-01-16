@@ -9,6 +9,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import Pagination from '@/components/ui/pagination';
 import {
     Select,
     SelectContent,
@@ -41,7 +42,7 @@ import {
     Trash2,
     X,
 } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 interface Account {
     id: number;
@@ -80,7 +81,34 @@ interface Transaction {
 }
 
 interface PageProps {
-    transactions: Transaction[];
+    transactions: {
+        data: Transaction[];
+        links: {
+            url: string | null;
+            label: string;
+            active: boolean;
+        }[];
+        meta: {
+            current_page: number;
+            last_page: number;
+            from: number;
+            to: number;
+            total: number;
+        };
+    };
+    summary: {
+        total_income: number;
+        total_expense: number;
+        total_count: number;
+    };
+    filters: {
+        search?: string;
+        date_from?: string;
+        date_to?: string;
+        account_id?: string;
+        category_id?: string;
+        merchant_id?: string;
+    };
     accounts: Account[];
     categories: Category[];
     merchants: Merchant[];
@@ -108,12 +136,15 @@ function isIncome(amount: string | number): boolean {
 }
 
 export default function TransactionsIndex({
-    transactions: transactionsList,
+    transactions: paginatedTransactions,
+    summary,
+    filters,
     accounts,
     categories,
     merchants,
 }: PageProps) {
     const timezone = useTimezone();
+    const transactionsList = paginatedTransactions.data;
 
     function formatDateForDisplay(dateStr: string): string {
         const date = new Date(dateStr + 'T00:00:00');
@@ -128,12 +159,20 @@ export default function TransactionsIndex({
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
     const [editingTransaction, setEditingTransaction] =
         useState<Transaction | null>(null);
-    const [searchQuery, setSearchQuery] = useState('');
-    const [dateFrom, setDateFrom] = useState('');
-    const [dateTo, setDateTo] = useState('');
-    const [accountFilter, setAccountFilter] = useState('all');
-    const [categoryFilter, setCategoryFilter] = useState('all');
-    const [merchantFilter, setMerchantFilter] = useState('all');
+
+    // Filter states
+    const [searchQuery, setSearchQuery] = useState(filters.search || '');
+    const [dateFrom, setDateFrom] = useState(filters.date_from || '');
+    const [dateTo, setDateTo] = useState(filters.date_to || '');
+    const [accountFilter, setAccountFilter] = useState(
+        filters.account_id || 'all',
+    );
+    const [categoryFilter, setCategoryFilter] = useState(
+        filters.category_id || 'all',
+    );
+    const [merchantFilter, setMerchantFilter] = useState(
+        filters.merchant_id || 'all',
+    );
 
     const editForm = useForm({
         account_id: '',
@@ -146,52 +185,46 @@ export default function TransactionsIndex({
 
     const deleteForm = useForm({});
 
-    const filteredTransactions = useMemo(() => {
-        return transactionsList.filter((transaction) => {
-            const matchesSearch =
-                !searchQuery ||
-                transaction.description
-                    ?.toLowerCase()
-                    .includes(searchQuery.toLowerCase()) ||
-                transaction.category?.name
-                    ?.toLowerCase()
-                    .includes(searchQuery.toLowerCase()) ||
-                transaction.merchant?.name
-                    ?.toLowerCase()
-                    .includes(searchQuery.toLowerCase()) ||
-                transaction.account?.name
-                    ?.toLowerCase()
-                    .includes(searchQuery.toLowerCase());
+    // Server-side filtering effect
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            const newFilters: PageProps['filters'] = {};
+            if (searchQuery) newFilters.search = searchQuery;
+            if (dateFrom) newFilters.date_from = dateFrom;
+            if (dateTo) newFilters.date_to = dateTo;
+            if (accountFilter !== 'all') newFilters.account_id = accountFilter;
+            if (categoryFilter !== 'all')
+                newFilters.category_id = categoryFilter;
+            if (merchantFilter !== 'all')
+                newFilters.merchant_id = merchantFilter;
 
-            const transactionDate = new Date(transaction.date);
-            const matchesDateFrom =
-                !dateFrom || transactionDate >= new Date(dateFrom);
-            const matchesDateTo =
-                !dateTo || transactionDate <= new Date(dateTo);
+            // Only navigate if filters actually changed to avoid infinite loops
+            const params = new URLSearchParams(window.location.search);
+            const currentSearch = params.get('search') || '';
+            const currentDateFrom = params.get('date_from') || '';
+            const currentDateTo = params.get('date_to') || '';
+            const currentAccount = params.get('account_id') || 'all';
+            const currentCategory = params.get('category_id') || 'all';
+            const currentMerchant = params.get('merchant_id') || 'all';
 
-            const matchesAccount =
-                accountFilter === 'all' ||
-                transaction.account?.id.toString() === accountFilter;
+            if (
+                searchQuery !== currentSearch ||
+                dateFrom !== currentDateFrom ||
+                dateTo !== currentDateTo ||
+                accountFilter !== currentAccount ||
+                categoryFilter !== currentCategory ||
+                merchantFilter !== currentMerchant
+            ) {
+                router.get(transactions.index().url, newFilters, {
+                    preserveState: true,
+                    preserveScroll: true,
+                    replace: true,
+                });
+            }
+        }, 300);
 
-            const matchesCategory =
-                categoryFilter === 'all' ||
-                transaction.category?.id.toString() === categoryFilter;
-
-            const matchesMerchant =
-                merchantFilter === 'all' ||
-                transaction.merchant?.id.toString() === merchantFilter;
-
-            return (
-                matchesSearch &&
-                matchesDateFrom &&
-                matchesDateTo &&
-                matchesAccount &&
-                matchesCategory &&
-                matchesMerchant
-            );
-        });
+        return () => clearTimeout(timer);
     }, [
-        transactionsList,
         searchQuery,
         dateFrom,
         dateTo,
@@ -200,16 +233,11 @@ export default function TransactionsIndex({
         merchantFilter,
     ]);
 
-    // Calculate summary stats
-    const summaryStats = useMemo(() => {
-        const totalIncome = filteredTransactions
-            .filter((t) => toNumber(t.amount) >= 0)
-            .reduce((sum, t) => sum + toNumber(t.amount), 0);
-        const totalExpense = filteredTransactions
-            .filter((t) => toNumber(t.amount) < 0)
-            .reduce((sum, t) => sum + Math.abs(toNumber(t.amount)), 0);
-        return { totalIncome, totalExpense };
-    }, [filteredTransactions]);
+    const filteredTransactions = transactionsList;
+    const summaryStats = {
+        totalIncome: summary.total_income,
+        totalExpense: summary.total_expense,
+    };
 
     const handleEdit = (transaction: Transaction) => {
         setEditingTransaction(transaction);
@@ -260,6 +288,7 @@ export default function TransactionsIndex({
         setAccountFilter('all');
         setCategoryFilter('all');
         setMerchantFilter('all');
+        router.get(transactions.index().url, {});
     };
 
     const hasActiveFilters =
@@ -315,7 +344,7 @@ export default function TransactionsIndex({
                                         Total Transactions
                                     </p>
                                     <p className="text-2xl font-bold">
-                                        {filteredTransactions.length}
+                                        {summary.total_count}
                                     </p>
                                 </div>
                             </CardContent>
@@ -365,8 +394,10 @@ export default function TransactionsIndex({
                                             All Transactions
                                         </CardTitle>
                                         <p className="text-sm text-muted-foreground">
-                                            {filteredTransactions.length} of{' '}
-                                            {transactionsList.length} shown
+                                            {paginatedTransactions.meta.from}-
+                                            {paginatedTransactions.meta.to} of{' '}
+                                            {paginatedTransactions.meta.total}{' '}
+                                            shown
                                         </p>
                                     </div>
                                 </div>
@@ -697,6 +728,12 @@ export default function TransactionsIndex({
                                     </Table>
                                 </div>
                             )}
+
+                            {/* Pagination */}
+                            <Pagination
+                                links={paginatedTransactions.links}
+                                meta={paginatedTransactions.meta}
+                            />
                         </CardContent>
                     </Card>
 

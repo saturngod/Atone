@@ -23,9 +23,19 @@ class TransactionController extends Controller
     public function index(Request $request)
     {
         $user = $request->user();
+        $filters = $request->only([
+            'search',
+            'date_from',
+            'date_to',
+            'account_id',
+            'category_id',
+            'merchant_id',
+        ]);
 
         return Inertia::render('Transactions/Index', [
-            'transactions' => $this->transactionService->getTransactionsForUser($user),
+            'transactions' => $this->transactionService->getTransactionsForUser($user, $filters),
+            'summary' => $this->transactionService->getTransactionSummary($user, $filters),
+            'filters' => $filters,
             'accounts' => $user->accounts()
                 ->select('id', 'name', 'color')
                 ->get()

@@ -8,16 +8,71 @@ use App\Models\Merchant;
 use App\Models\Transaction;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 class TransactionService
 {
-    public function getTransactionsForUser(User $user): Collection
+    public function getTransactionsForUser(User $user, array $filters = []): LengthAwarePaginator
     {
-        return $user->transactions()
-            ->with(['account', 'category', 'merchant'])
-            ->orderBy('date', 'desc')
+        $query = $user->transactions()
+            ->with(['account', 'category', 'merchant']);
+
+        $this->applyFilters($query, $filters);
+
+        return $query->orderBy('date', 'desc')
             ->orderBy('created_at', 'desc')
-            ->get();
+            ->paginate($filters['per_page'] ?? 50)
+            ->withQueryString();
+    }
+
+    public function getTransactionSummary(User $user, array $filters = []): array
+    {
+        $query = $user->transactions();
+
+        $this->applyFilters($query, $filters);
+
+        $totalIncome = (float) (clone $query)->where('amount', '>=', 0)->sum('amount');
+        $totalExpense = (float) (clone $query)->where('amount', '<', 0)->sum('amount');
+        $count = $query->count();
+
+        return [
+            'total_income' => $totalIncome,
+            'total_expense' => abs($totalExpense),
+            'total_count' => $count,
+        ];
+    }
+
+    private function applyFilters($query, array $filters): void
+    {
+        if (! empty($filters['search'])) {
+            $search = $filters['search'];
+            $query->where(function ($q) use ($search) {
+                $q->where('description', 'like', "%{$search}%")
+                    ->orWhereHas('category', fn ($q) => $q->where('name', 'like', "%{$search}%"))
+                    ->orWhereHas('merchant', fn ($q) => $q->where('name', 'like', "%{$search}%"))
+                    ->orWhereHas('account', fn ($q) => $q->where('name', 'like', "%{$search}%"));
+            });
+        }
+
+        if (! empty($filters['date_from'])) {
+            $query->where('date', '>=', $filters['date_from']);
+        }
+
+        if (! empty($filters['date_to'])) {
+            $query->where('date', '<=', $filters['date_to']);
+        }
+
+        if (! empty($filters['account_id']) && $filters['account_id'] !== 'all') {
+            $query->where('account_id', $filters['account_id']);
+        }
+
+        if (! empty($filters['category_id']) && $filters['category_id'] !== 'all') {
+            $query->where('category_id', $filters['category_id']);
+        }
+
+        if (! empty($filters['merchant_id']) && $filters['merchant_id'] !== 'all') {
+            $query->where('merchant_id', $filters['merchant_id']);
+        }
     }
 
     public function getRecentTransactions(User $user, string $currency, int $limit = 5): Collection
