@@ -131,7 +131,9 @@ export default function TransactionsIndex({
     const [searchQuery, setSearchQuery] = useState('');
     const [dateFrom, setDateFrom] = useState('');
     const [dateTo, setDateTo] = useState('');
+    const [accountFilter, setAccountFilter] = useState('all');
     const [categoryFilter, setCategoryFilter] = useState('all');
+    const [merchantFilter, setMerchantFilter] = useState('all');
 
     const editForm = useForm({
         account_id: '',
@@ -167,18 +169,36 @@ export default function TransactionsIndex({
             const matchesDateTo =
                 !dateTo || transactionDate <= new Date(dateTo);
 
+            const matchesAccount =
+                accountFilter === 'all' ||
+                transaction.account?.id.toString() === accountFilter;
+
             const matchesCategory =
                 categoryFilter === 'all' ||
                 transaction.category?.id.toString() === categoryFilter;
+
+            const matchesMerchant =
+                merchantFilter === 'all' ||
+                transaction.merchant?.id.toString() === merchantFilter;
 
             return (
                 matchesSearch &&
                 matchesDateFrom &&
                 matchesDateTo &&
-                matchesCategory
+                matchesAccount &&
+                matchesCategory &&
+                matchesMerchant
             );
         });
-    }, [transactionsList, searchQuery, dateFrom, dateTo, categoryFilter]);
+    }, [
+        transactionsList,
+        searchQuery,
+        dateFrom,
+        dateTo,
+        accountFilter,
+        categoryFilter,
+        merchantFilter,
+    ]);
 
     // Calculate summary stats
     const summaryStats = useMemo(() => {
@@ -237,11 +257,18 @@ export default function TransactionsIndex({
         setSearchQuery('');
         setDateFrom('');
         setDateTo('');
+        setAccountFilter('all');
         setCategoryFilter('all');
+        setMerchantFilter('all');
     };
 
     const hasActiveFilters =
-        searchQuery || dateFrom || dateTo || categoryFilter !== 'all';
+        searchQuery ||
+        dateFrom ||
+        dateTo ||
+        accountFilter !== 'all' ||
+        categoryFilter !== 'all' ||
+        merchantFilter !== 'all';
 
     return (
         <>
@@ -401,10 +428,40 @@ export default function TransactionsIndex({
                                             />
                                         </div>
                                         <Select
+                                            value={accountFilter}
+                                            onValueChange={setAccountFilter}
+                                        >
+                                            <SelectTrigger className="w-[160px] bg-background">
+                                                <SelectValue placeholder="All Accounts" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="all">
+                                                    All Accounts
+                                                </SelectItem>
+                                                {accounts.map((account) => (
+                                                    <SelectItem
+                                                        key={account.id}
+                                                        value={account.id.toString()}
+                                                    >
+                                                        <div className="flex items-center gap-2">
+                                                            <div
+                                                                className="h-2 w-2 rounded-full"
+                                                                style={{
+                                                                    backgroundColor:
+                                                                        account.color,
+                                                                }}
+                                                            />
+                                                            {account.name}
+                                                        </div>
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                        <Select
                                             value={categoryFilter}
                                             onValueChange={setCategoryFilter}
                                         >
-                                            <SelectTrigger className="w-[180px] bg-background">
+                                            <SelectTrigger className="w-[160px] bg-background">
                                                 <SelectValue placeholder="All Categories" />
                                             </SelectTrigger>
                                             <SelectContent>
@@ -417,6 +474,27 @@ export default function TransactionsIndex({
                                                         value={category.id.toString()}
                                                     >
                                                         {category.name}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                        <Select
+                                            value={merchantFilter}
+                                            onValueChange={setMerchantFilter}
+                                        >
+                                            <SelectTrigger className="w-[160px] bg-background">
+                                                <SelectValue placeholder="All Merchants" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="all">
+                                                    All Merchants
+                                                </SelectItem>
+                                                {merchants.map((merchant) => (
+                                                    <SelectItem
+                                                        key={merchant.id}
+                                                        value={merchant.id.toString()}
+                                                    >
+                                                        {merchant.name}
                                                     </SelectItem>
                                                 ))}
                                             </SelectContent>
