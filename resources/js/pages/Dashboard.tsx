@@ -27,7 +27,7 @@ import {
     TrendingUp,
     Wallet,
 } from 'lucide-react';
-import { Area, AreaChart, XAxis, YAxis } from 'recharts';
+import { Area, AreaChart, Label, Pie, PieChart, XAxis, YAxis } from 'recharts';
 
 interface Transaction {
     id: number;
@@ -92,6 +92,18 @@ const chartConfig = {
         color: 'hsl(0, 84%, 60%)',
     },
 };
+
+// Color palette for pie charts
+const PIE_COLORS = [
+    'hsl(25, 95%, 53%)', // orange
+    'hsl(43, 96%, 56%)', // amber
+    'hsl(142, 71%, 45%)', // green
+    'hsl(199, 89%, 48%)', // cyan
+    'hsl(262, 83%, 58%)', // purple
+    'hsl(339, 90%, 51%)', // pink
+    'hsl(173, 80%, 40%)', // teal
+    'hsl(221, 83%, 53%)', // blue
+];
 
 function toNumber(value: string | number): number {
     return typeof value === 'string' ? parseFloat(value) : value;
@@ -539,53 +551,117 @@ export default function Dashboard({
                             </CardHeader>
                             <CardContent className="pb-6">
                                 {byCategory.length === 0 ? (
-                                    <div className="flex h-24 items-center justify-center rounded-lg border border-dashed">
+                                    <div className="flex h-[200px] items-center justify-center rounded-lg border border-dashed">
                                         <p className="text-sm text-muted-foreground">
                                             No data yet
                                         </p>
                                     </div>
                                 ) : (
-                                    <div className="space-y-2">
-                                        {byCategory.map((category, index) => {
-                                            const maxTotal = Math.max(
-                                                ...byCategory.map((c) =>
-                                                    Math.abs(toNumber(c.total)),
-                                                ),
-                                            );
-                                            const percentage =
-                                                (Math.abs(
-                                                    toNumber(category.total),
-                                                ) /
-                                                    maxTotal) *
-                                                100;
-                                            return (
-                                                <div
-                                                    key={index}
-                                                    className="space-y-1"
-                                                >
-                                                    <div className="flex items-center justify-between text-sm">
-                                                        <span>
-                                                            {category.name}
-                                                        </span>
-                                                        <span className="font-medium">
-                                                            $
-                                                            {formatCurrency(
-                                                                category.total,
-                                                            )}
-                                                        </span>
-                                                    </div>
-                                                    <div className="h-2 overflow-hidden rounded-full bg-muted">
-                                                        <div
-                                                            className="h-full rounded-full bg-gradient-to-r from-orange-400 to-orange-600 transition-all"
-                                                            style={{
-                                                                width: `${percentage}%`,
-                                                            }}
-                                                        />
-                                                    </div>
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
+                                    <ChartContainer
+                                        config={chartConfig}
+                                        className="mx-auto aspect-square h-[200px]"
+                                    >
+                                        <PieChart>
+                                            <ChartTooltip
+                                                content={
+                                                    <ChartTooltipContent
+                                                        formatter={(
+                                                            value,
+                                                            name,
+                                                        ) => [
+                                                            `$${Number(value).toFixed(2)}`,
+                                                            name,
+                                                        ]}
+                                                    />
+                                                }
+                                            />
+                                            <Pie
+                                                data={byCategory.map(
+                                                    (cat, i) => ({
+                                                        name: cat.name,
+                                                        value: Math.abs(
+                                                            toNumber(cat.total),
+                                                        ),
+                                                        fill: PIE_COLORS[
+                                                            i %
+                                                                PIE_COLORS.length
+                                                        ],
+                                                    }),
+                                                )}
+                                                dataKey="value"
+                                                nameKey="name"
+                                                innerRadius={60}
+                                                outerRadius={80}
+                                                strokeWidth={2}
+                                                stroke="hsl(var(--background))"
+                                            >
+                                                <Label
+                                                    content={({ viewBox }) => {
+                                                        if (
+                                                            viewBox &&
+                                                            'cx' in viewBox &&
+                                                            'cy' in viewBox
+                                                        ) {
+                                                            const total =
+                                                                byCategory.reduce(
+                                                                    (
+                                                                        sum,
+                                                                        cat,
+                                                                    ) =>
+                                                                        sum +
+                                                                        Math.abs(
+                                                                            toNumber(
+                                                                                cat.total,
+                                                                            ),
+                                                                        ),
+                                                                    0,
+                                                                );
+                                                            return (
+                                                                <text
+                                                                    x={
+                                                                        viewBox.cx
+                                                                    }
+                                                                    y={
+                                                                        viewBox.cy
+                                                                    }
+                                                                    textAnchor="middle"
+                                                                    dominantBaseline="middle"
+                                                                >
+                                                                    <tspan
+                                                                        x={
+                                                                            viewBox.cx
+                                                                        }
+                                                                        y={
+                                                                            viewBox.cy
+                                                                        }
+                                                                        className="fill-foreground text-xl font-bold"
+                                                                    >
+                                                                        $
+                                                                        {formatCurrency(
+                                                                            total,
+                                                                        )}
+                                                                    </tspan>
+                                                                    <tspan
+                                                                        x={
+                                                                            viewBox.cx
+                                                                        }
+                                                                        y={
+                                                                            (viewBox.cy ||
+                                                                                0) +
+                                                                            20
+                                                                        }
+                                                                        className="fill-muted-foreground text-xs"
+                                                                    >
+                                                                        Total
+                                                                    </tspan>
+                                                                </text>
+                                                            );
+                                                        }
+                                                    }}
+                                                />
+                                            </Pie>
+                                        </PieChart>
+                                    </ChartContainer>
                                 )}
                             </CardContent>
                         </Card>
@@ -609,53 +685,116 @@ export default function Dashboard({
                             </CardHeader>
                             <CardContent className="pb-6">
                                 {byMerchant.length === 0 ? (
-                                    <div className="flex h-24 items-center justify-center rounded-lg border border-dashed">
+                                    <div className="flex h-[200px] items-center justify-center rounded-lg border border-dashed">
                                         <p className="text-sm text-muted-foreground">
                                             No data yet
                                         </p>
                                     </div>
                                 ) : (
-                                    <div className="space-y-2">
-                                        {byMerchant.map((merchant, index) => {
-                                            const maxTotal = Math.max(
-                                                ...byMerchant.map((m) =>
-                                                    Math.abs(toNumber(m.total)),
-                                                ),
-                                            );
-                                            const percentage =
-                                                (Math.abs(
-                                                    toNumber(merchant.total),
-                                                ) /
-                                                    maxTotal) *
-                                                100;
-                                            return (
-                                                <div
-                                                    key={index}
-                                                    className="space-y-1"
-                                                >
-                                                    <div className="flex items-center justify-between text-sm">
-                                                        <span>
-                                                            {merchant.name}
-                                                        </span>
-                                                        <span className="font-medium">
-                                                            $
-                                                            {formatCurrency(
+                                    <ChartContainer
+                                        config={chartConfig}
+                                        className="mx-auto aspect-square h-[200px]"
+                                    >
+                                        <PieChart>
+                                            <ChartTooltip
+                                                content={
+                                                    <ChartTooltipContent
+                                                        formatter={(
+                                                            value,
+                                                            name,
+                                                        ) => [
+                                                            `$${Number(value).toFixed(2)}`,
+                                                            name,
+                                                        ]}
+                                                    />
+                                                }
+                                            />
+                                            <Pie
+                                                data={byMerchant.map(
+                                                    (merchant, i) => ({
+                                                        name: merchant.name,
+                                                        value: Math.abs(
+                                                            toNumber(
                                                                 merchant.total,
-                                                            )}
-                                                        </span>
-                                                    </div>
-                                                    <div className="h-2 overflow-hidden rounded-full bg-muted">
-                                                        <div
-                                                            className="h-full rounded-full bg-gradient-to-r from-cyan-400 to-cyan-600 transition-all"
-                                                            style={{
-                                                                width: `${percentage}%`,
-                                                            }}
-                                                        />
-                                                    </div>
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
+                                                            ),
+                                                        ),
+                                                        fill: PIE_COLORS[
+                                                            (i + 3) %
+                                                                PIE_COLORS.length
+                                                        ],
+                                                    }),
+                                                )}
+                                                dataKey="value"
+                                                nameKey="name"
+                                                innerRadius={60}
+                                                outerRadius={80}
+                                                strokeWidth={2}
+                                                stroke="hsl(var(--background))"
+                                            >
+                                                <Label
+                                                    content={({ viewBox }) => {
+                                                        if (
+                                                            viewBox &&
+                                                            'cx' in viewBox &&
+                                                            'cy' in viewBox
+                                                        ) {
+                                                            const total =
+                                                                byMerchant.reduce(
+                                                                    (sum, m) =>
+                                                                        sum +
+                                                                        Math.abs(
+                                                                            toNumber(
+                                                                                m.total,
+                                                                            ),
+                                                                        ),
+                                                                    0,
+                                                                );
+                                                            return (
+                                                                <text
+                                                                    x={
+                                                                        viewBox.cx
+                                                                    }
+                                                                    y={
+                                                                        viewBox.cy
+                                                                    }
+                                                                    textAnchor="middle"
+                                                                    dominantBaseline="middle"
+                                                                >
+                                                                    <tspan
+                                                                        x={
+                                                                            viewBox.cx
+                                                                        }
+                                                                        y={
+                                                                            viewBox.cy
+                                                                        }
+                                                                        className="fill-foreground text-xl font-bold"
+                                                                    >
+                                                                        $
+                                                                        {formatCurrency(
+                                                                            total,
+                                                                        )}
+                                                                    </tspan>
+                                                                    <tspan
+                                                                        x={
+                                                                            viewBox.cx
+                                                                        }
+                                                                        y={
+                                                                            (viewBox.cy ||
+                                                                                0) +
+                                                                            20
+                                                                        }
+                                                                        className="fill-muted-foreground text-xs"
+                                                                    >
+                                                                        Total
+                                                                    </tspan>
+                                                                </text>
+                                                            );
+                                                        }
+                                                    }}
+                                                />
+                                            </Pie>
+                                        </PieChart>
+                                    </ChartContainer>
                                 )}
                             </CardContent>
                         </Card>
