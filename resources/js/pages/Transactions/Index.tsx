@@ -690,11 +690,16 @@ export default function TransactionsIndex({
                                 <div className="space-y-2">
                                     <Label>Merchant</Label>
                                     <Select
-                                        value={editForm.data.merchant_name}
+                                        value={
+                                            editForm.data.merchant_name ||
+                                            '__none__'
+                                        }
                                         onValueChange={(value) =>
                                             editForm.setData(
                                                 'merchant_name',
-                                                value,
+                                                value === '__none__'
+                                                    ? ''
+                                                    : value,
                                             )
                                         }
                                     >
@@ -702,7 +707,7 @@ export default function TransactionsIndex({
                                             <SelectValue placeholder="Select merchant (optional)..." />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="">
+                                            <SelectItem value="__none__">
                                                 None
                                             </SelectItem>
                                             {merchants.map((merchant) => (
