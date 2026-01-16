@@ -390,8 +390,9 @@ export default function TransactionsIndex({
                                     <Filter className="h-4 w-4" />
                                     Filters
                                 </div>
-                                <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
-                                    <div className="relative flex-1">
+                                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-6">
+                                    {/* Search - takes full width on mobile, 2 cols on lg */}
+                                    <div className="relative sm:col-span-2 lg:col-span-2">
                                         <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                                         <Input
                                             placeholder="Search transactions..."
@@ -402,104 +403,107 @@ export default function TransactionsIndex({
                                             className="bg-background pl-9"
                                         />
                                     </div>
-                                    <div className="flex items-center gap-2">
-                                        <div className="flex items-center gap-2 rounded-lg border bg-background p-1">
-                                            <Calendar className="ml-2 h-4 w-4 text-muted-foreground" />
-                                            <Input
-                                                type="date"
-                                                value={dateFrom}
-                                                onChange={(e) =>
-                                                    setDateFrom(e.target.value)
-                                                }
-                                                className="w-auto border-0 bg-transparent p-1 shadow-none focus-visible:ring-0"
-                                                placeholder="From"
-                                            />
-                                            <span className="text-muted-foreground">
-                                                →
-                                            </span>
-                                            <Input
-                                                type="date"
-                                                value={dateTo}
-                                                onChange={(e) =>
-                                                    setDateTo(e.target.value)
-                                                }
-                                                className="w-auto border-0 bg-transparent p-1 shadow-none focus-visible:ring-0"
-                                                placeholder="To"
-                                            />
-                                        </div>
-                                        <Select
-                                            value={accountFilter}
-                                            onValueChange={setAccountFilter}
-                                        >
-                                            <SelectTrigger className="w-[160px] bg-background">
-                                                <SelectValue placeholder="All Accounts" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="all">
-                                                    All Accounts
-                                                </SelectItem>
-                                                {accounts.map((account) => (
-                                                    <SelectItem
-                                                        key={account.id}
-                                                        value={account.id.toString()}
-                                                    >
-                                                        <div className="flex items-center gap-2">
-                                                            <div
-                                                                className="h-2 w-2 rounded-full"
-                                                                style={{
-                                                                    backgroundColor:
-                                                                        account.color,
-                                                                }}
-                                                            />
-                                                            {account.name}
-                                                        </div>
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                        <Select
-                                            value={categoryFilter}
-                                            onValueChange={setCategoryFilter}
-                                        >
-                                            <SelectTrigger className="w-[160px] bg-background">
-                                                <SelectValue placeholder="All Categories" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="all">
-                                                    All Categories
-                                                </SelectItem>
-                                                {categories.map((category) => (
-                                                    <SelectItem
-                                                        key={category.id}
-                                                        value={category.id.toString()}
-                                                    >
-                                                        {category.name}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                        <Select
-                                            value={merchantFilter}
-                                            onValueChange={setMerchantFilter}
-                                        >
-                                            <SelectTrigger className="w-[160px] bg-background">
-                                                <SelectValue placeholder="All Merchants" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="all">
-                                                    All Merchants
-                                                </SelectItem>
-                                                {merchants.map((merchant) => (
-                                                    <SelectItem
-                                                        key={merchant.id}
-                                                        value={merchant.id.toString()}
-                                                    >
-                                                        {merchant.name}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
+                                    {/* Date From */}
+                                    <div className="flex items-center gap-2 rounded-lg border bg-background p-2">
+                                        <Calendar className="h-4 w-4 shrink-0 text-muted-foreground" />
+                                        <Input
+                                            type="date"
+                                            value={dateFrom}
+                                            onChange={(e) =>
+                                                setDateFrom(e.target.value)
+                                            }
+                                            className="h-auto w-full border-0 bg-transparent p-0 shadow-none focus-visible:ring-0"
+                                            placeholder="From"
+                                        />
                                     </div>
+                                    {/* Date To */}
+                                    <div className="flex items-center gap-2 rounded-lg border bg-background p-2">
+                                        <Calendar className="h-4 w-4 shrink-0 text-muted-foreground" />
+                                        <Input
+                                            type="date"
+                                            value={dateTo}
+                                            onChange={(e) =>
+                                                setDateTo(e.target.value)
+                                            }
+                                            className="h-auto w-full border-0 bg-transparent p-0 shadow-none focus-visible:ring-0"
+                                            placeholder="To"
+                                        />
+                                    </div>
+                                    {/* Account Filter */}
+                                    <Select
+                                        value={accountFilter}
+                                        onValueChange={setAccountFilter}
+                                    >
+                                        <SelectTrigger className="w-full bg-background">
+                                            <SelectValue placeholder="All Accounts" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="all">
+                                                All Accounts
+                                            </SelectItem>
+                                            {accounts.map((account) => (
+                                                <SelectItem
+                                                    key={account.id}
+                                                    value={account.id.toString()}
+                                                >
+                                                    <div className="flex items-center gap-2">
+                                                        <div
+                                                            className="h-2 w-2 rounded-full"
+                                                            style={{
+                                                                backgroundColor:
+                                                                    account.color,
+                                                            }}
+                                                        />
+                                                        {account.name}
+                                                    </div>
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                    {/* Category Filter */}
+                                    <Select
+                                        value={categoryFilter}
+                                        onValueChange={setCategoryFilter}
+                                    >
+                                        <SelectTrigger className="w-full bg-background">
+                                            <SelectValue placeholder="All Categories" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="all">
+                                                All Categories
+                                            </SelectItem>
+                                            {categories.map((category) => (
+                                                <SelectItem
+                                                    key={category.id}
+                                                    value={category.id.toString()}
+                                                >
+                                                    {category.name}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                    {/* Merchant Filter */}
+                                    <Select
+                                        value={merchantFilter}
+                                        onValueChange={setMerchantFilter}
+                                    >
+                                        <SelectTrigger className="w-full bg-background">
+                                            <SelectValue placeholder="All Merchants" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="all">
+                                                All Merchants
+                                            </SelectItem>
+                                            {merchants.map((merchant) => (
+                                                <SelectItem
+                                                    key={merchant.id}
+                                                    value={merchant.id.toString()}
+                                                >
+                                                    {merchant.name}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
                                 </div>
                             </div>
 
