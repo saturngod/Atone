@@ -98,10 +98,10 @@ class OpenAIService
             $dataContext .= "User's accounts: {$accountContext}. ";
         }
         if ($categories) {
-            $dataContext .= "User's categories: {$categories}. Use these exact category names when possible. ";
+            $dataContext .= "User's existing categories: {$categories}. Use these exact names if they match, but if you detect a different category from context, use that instead - new categories will be created automatically. ";
         }
         if ($merchants) {
-            $dataContext .= "User's existing merchants: {$merchants}. Reuse these names when the user mentions them. ";
+            $dataContext .= "User's existing merchants: {$merchants}. Use these exact names if they match, but if you detect a different merchant from context, use that instead - new merchants will be created automatically. ";
         }
 
         $messages = [
@@ -114,10 +114,10 @@ class OpenAIService
                 '2. amount - The transaction amount (negative for expenses, positive for income) '.
                 '3. description - Brief description of what the transaction is for '.
                 '4. date - The date of the transaction (use today if user says "today" or doesn\'t specify) '.
-                '5. category_name - REQUIRED. Auto-detect from context: "coffee/restaurant/groceries" -> "Food & Dining", "games/Netflix/movies/Steam" -> "Entertainment", "gas/Uber/taxi" -> "Transportation", "salary/paycheck/deposit" -> "Income", "electricity/water/internet" -> "Utilities", "rent/mortgage" -> "Housing", "doctor/pharmacy/medicine" -> "Healthcare", "shopping/clothes/Amazon" -> "Shopping". If you cannot detect the category, ASK the user. '.
-                '6. merchant_name - REQUIRED. Extract from the user\'s message (e.g., "Starbucks", "Amazon", "Steam", "Netflix", "Uber"). If the user mentions a store, company, or brand name, use it. If no merchant is mentioned and you cannot infer one, ASK the user: "Where did you make this purchase?" or "What\'s the name of the merchant/store?" '.
+                '5. category_name - REQUIRED. Auto-detect from context and USE THE DETECTED NAME DIRECTLY. The system will create the category if it doesn\'t exist. Common mappings: "coffee/restaurant/groceries" -> "Food & Dining", "games/Netflix/movies/Steam" -> "Entertainment", "gas/Uber/taxi" -> "Transportation", "salary/paycheck/deposit" -> "Income", "electricity/water/internet" -> "Utilities", "rent/mortgage" -> "Housing", "doctor/pharmacy/medicine" -> "Healthcare", "shopping/clothes/Amazon" -> "Shopping". Only ask the user if you TRULY cannot detect ANY category from context. '.
+                '6. merchant_name - REQUIRED. Extract from the user\'s message (e.g., "Starbucks", "Amazon", "Steam", "Netflix", "Uber") and USE THE NAME DIRECTLY. The system will create the merchant if it doesn\'t exist. Only ask if no merchant is mentioned AND you cannot infer one. '.
                 'DO NOT call create_transaction unless you have values for ALL 6 fields. If ANY field is missing and cannot be auto-detected, ask the user in a friendly, conversational way. '.
-                'Examples of asking: "What category would you like for this transaction?" or "Which store/merchant was this at?" or "How much did you spend?" '.$userContext,
+                'IMPORTANT: DO NOT ask users to select from existing categories or merchants. If you detect a category or merchant from the prompt, use it directly - the system handles creating new ones automatically. '.$userContext,
             ],
             ...$conversationHistory,
             ['role' => 'user', 'content' => $prompt],
@@ -218,7 +218,7 @@ class OpenAIService
                         ],
                         'category_name' => [
                             'type' => 'string',
-                            'description' => 'The category for the transaction. REQUIRED. Auto-detect based on context: "coffee/restaurant/groceries" -> "Food & Dining", "games/Netflix/movies/Steam" -> "Entertainment", "gas/Uber/taxi" -> "Transportation", "salary/paycheck" -> "Income", "utilities/electricity/water" -> "Utilities", "rent/mortgage" -> "Housing", "doctor/pharmacy" -> "Healthcare", "shopping/clothes" -> "Shopping". If you cannot detect it, ASK the user.',
+                            'description' => 'The category for the transaction. REQUIRED. Auto-detect from context and use the detected name directly - the system will create the category if it doesn\'t exist. Common mappings: "coffee/restaurant/groceries" -> "Food & Dining", "games/Netflix/movies/Steam" -> "Entertainment", "gas/Uber/taxi" -> "Transportation", "salary/paycheck" -> "Income", "utilities/electricity/water" -> "Utilities", "rent/mortgage" -> "Housing", "doctor/pharmacy" -> "Healthcare", "shopping/clothes" -> "Shopping". Only ask if you truly cannot detect any category.',
                         ],
                         'amount' => [
                             'type' => 'number',
@@ -230,7 +230,7 @@ class OpenAIService
                         ],
                         'merchant_name' => [
                             'type' => 'string',
-                            'description' => 'The name of the merchant/store/company. REQUIRED. Extract from the user\'s message (e.g., "Starbucks", "Steam", "Amazon", "Netflix", "Uber", "Walmart"). If no merchant is mentioned, ASK the user: "Where did you make this purchase?" or "What\'s the name of the store/merchant?"',
+                            'description' => 'The name of the merchant/store/company. REQUIRED. Extract from the user\'s message (e.g., "Starbucks", "Steam", "Amazon", "Netflix", "Uber", "Walmart") and use it directly - the system will create the merchant if it doesn\'t exist. Only ask if no merchant is mentioned and you truly cannot infer one.',
                         ],
                         'date' => [
                             'type' => 'string',

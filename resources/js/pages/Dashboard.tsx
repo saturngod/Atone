@@ -20,6 +20,7 @@ import { Head, Link, router } from '@inertiajs/react';
 import {
     ArrowDownRight,
     ArrowUpRight,
+    Bot,
     CreditCard,
     Layers,
     RefreshCw,
@@ -27,7 +28,8 @@ import {
     TrendingUp,
     Wallet,
 } from 'lucide-react';
-import { Area, AreaChart, Label, Pie, PieChart, XAxis, YAxis } from 'recharts';
+import { useMemo } from 'react';
+import { Area, AreaChart, XAxis, YAxis } from 'recharts';
 
 interface Transaction {
     id: number;
@@ -93,17 +95,226 @@ const chartConfig = {
     },
 };
 
-// Color palette for pie charts
-const PIE_COLORS = [
+// Color palette for progress bars
+const PROGRESS_COLORS = [
     'hsl(25, 95%, 53%)', // orange
-    'hsl(43, 96%, 56%)', // amber
-    'hsl(142, 71%, 45%)', // green
-    'hsl(199, 89%, 48%)', // cyan
-    'hsl(262, 83%, 58%)', // purple
     'hsl(339, 90%, 51%)', // pink
+    'hsl(262, 83%, 58%)', // purple
+    'hsl(199, 89%, 48%)', // cyan
     'hsl(173, 80%, 40%)', // teal
     'hsl(221, 83%, 53%)', // blue
+    'hsl(43, 96%, 56%)', // amber
+    'hsl(142, 71%, 45%)', // green
 ];
+
+// By Category Card Component - Shows expenses only with progress bars
+function ByCategoryCard({
+    byCategory,
+    formatCurrency,
+    toNumber,
+}: {
+    byCategory: CategorySummary[];
+    formatCurrency: (amount: string | number) => string;
+    toNumber: (value: string | number) => number;
+}) {
+    // Filter to only show expenses (negative totals) and sort by amount descending
+    const expenseCategories = useMemo(() => {
+        return byCategory
+            .filter((cat) => toNumber(cat.total) < 0)
+            .map((cat) => ({
+                name: cat.name,
+                amount: Math.abs(toNumber(cat.total)),
+            }))
+            .sort((a, b) => b.amount - a.amount);
+    }, [byCategory, toNumber]);
+
+    // Get the maximum amount for calculating progress percentage
+    const maxAmount = useMemo(() => {
+        if (expenseCategories.length === 0) return 0;
+        return Math.max(...expenseCategories.map((c) => c.amount));
+    }, [expenseCategories]);
+
+    // Calculate total expenses
+    const totalExpense = useMemo(() => {
+        return expenseCategories.reduce((sum, cat) => sum + cat.amount, 0);
+    }, [expenseCategories]);
+
+    return (
+        <Card>
+            <CardHeader className="pb-4">
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                        <div className="rounded-lg bg-orange-500/10 p-2">
+                            <Layers className="h-4 w-4 text-orange-600" />
+                        </div>
+                        <div>
+                            <CardTitle className="text-base font-semibold">
+                                By Category
+                            </CardTitle>
+                            <p className="text-xs text-muted-foreground">
+                                Expenses this month
+                            </p>
+                        </div>
+                    </div>
+                    {totalExpense > 0 && (
+                        <span className="text-lg font-bold text-red-600">
+                            ${formatCurrency(totalExpense)}
+                        </span>
+                    )}
+                </div>
+            </CardHeader>
+            <CardContent className="pb-6">
+                {expenseCategories.length === 0 ? (
+                    <div className="flex h-24 items-center justify-center rounded-lg border border-dashed">
+                        <p className="text-sm text-muted-foreground">
+                            No expenses yet
+                        </p>
+                    </div>
+                ) : (
+                    <div className="space-y-4">
+                        {expenseCategories.map((cat, index) => {
+                            const percentage =
+                                maxAmount > 0
+                                    ? (cat.amount / maxAmount) * 100
+                                    : 0;
+                            const color =
+                                PROGRESS_COLORS[index % PROGRESS_COLORS.length];
+
+                            return (
+                                <div key={cat.name} className="space-y-1.5">
+                                    <div className="flex items-center justify-between text-sm">
+                                        <span className="max-w-[60%] truncate font-medium">
+                                            {cat.name}
+                                        </span>
+                                        <span className="font-semibold text-red-600">
+                                            ${formatCurrency(cat.amount)}
+                                        </span>
+                                    </div>
+                                    <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+                                        <div
+                                            className="h-full rounded-full transition-all duration-500 ease-out"
+                                            style={{
+                                                width: `${percentage}%`,
+                                                backgroundColor: color,
+                                            }}
+                                        />
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                )}
+            </CardContent>
+        </Card>
+    );
+}
+
+// By Merchant Card Component - Shows expenses only with progress bars
+function ByMerchantCard({
+    byMerchant,
+    formatCurrency,
+    toNumber,
+}: {
+    byMerchant: MerchantSummary[];
+    formatCurrency: (amount: string | number) => string;
+    toNumber: (value: string | number) => number;
+}) {
+    // Filter to only show expenses (negative totals) and sort by amount descending
+    const expenseMerchants = useMemo(() => {
+        return byMerchant
+            .filter((m) => toNumber(m.total) < 0)
+            .map((m) => ({
+                name: m.name,
+                amount: Math.abs(toNumber(m.total)),
+            }))
+            .sort((a, b) => b.amount - a.amount);
+    }, [byMerchant, toNumber]);
+
+    // Get the maximum amount for calculating progress percentage
+    const maxAmount = useMemo(() => {
+        if (expenseMerchants.length === 0) return 0;
+        return Math.max(...expenseMerchants.map((m) => m.amount));
+    }, [expenseMerchants]);
+
+    // Calculate total expenses
+    const totalExpense = useMemo(() => {
+        return expenseMerchants.reduce((sum, m) => sum + m.amount, 0);
+    }, [expenseMerchants]);
+
+    return (
+        <Card>
+            <CardHeader className="pb-4">
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                        <div className="rounded-lg bg-cyan-500/10 p-2">
+                            <Store className="h-4 w-4 text-cyan-600" />
+                        </div>
+                        <div>
+                            <CardTitle className="text-base font-semibold">
+                                By Merchant
+                            </CardTitle>
+                            <p className="text-xs text-muted-foreground">
+                                Expenses this month
+                            </p>
+                        </div>
+                    </div>
+                    {totalExpense > 0 && (
+                        <span className="text-lg font-bold text-red-600">
+                            ${formatCurrency(totalExpense)}
+                        </span>
+                    )}
+                </div>
+            </CardHeader>
+            <CardContent className="pb-6">
+                {expenseMerchants.length === 0 ? (
+                    <div className="flex h-24 items-center justify-center rounded-lg border border-dashed">
+                        <p className="text-sm text-muted-foreground">
+                            No expenses yet
+                        </p>
+                    </div>
+                ) : (
+                    <div className="space-y-4">
+                        {expenseMerchants.map((merchant, index) => {
+                            const percentage =
+                                maxAmount > 0
+                                    ? (merchant.amount / maxAmount) * 100
+                                    : 0;
+                            const color =
+                                PROGRESS_COLORS[
+                                    (index + 3) % PROGRESS_COLORS.length
+                                ];
+
+                            return (
+                                <div
+                                    key={merchant.name}
+                                    className="space-y-1.5"
+                                >
+                                    <div className="flex items-center justify-between text-sm">
+                                        <span className="max-w-[60%] truncate font-medium">
+                                            {merchant.name}
+                                        </span>
+                                        <span className="font-semibold text-red-600">
+                                            ${formatCurrency(merchant.amount)}
+                                        </span>
+                                    </div>
+                                    <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+                                        <div
+                                            className="h-full rounded-full transition-all duration-500 ease-out"
+                                            style={{
+                                                width: `${percentage}%`,
+                                                backgroundColor: color,
+                                            }}
+                                        />
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                )}
+            </CardContent>
+        </Card>
+    );
+}
 
 function toNumber(value: string | number): number {
     return typeof value === 'string' ? parseFloat(value) : value;
@@ -197,6 +408,15 @@ export default function Dashboard({
                             </p>
                         </div>
                         <div className="flex items-center gap-2">
+                            <Button
+                                variant="outline"
+                                size="icon"
+                                onClick={() => router.visit('/ai')}
+                                title="AI Assistant"
+                                className="shrink-0"
+                            >
+                                <Bot className="h-4 w-4" />
+                            </Button>
                             <Button
                                 variant="outline"
                                 size="icon"
@@ -532,272 +752,19 @@ export default function Dashboard({
                             </CardContent>
                         </Card>
 
-                        {/* By Category */}
-                        <Card>
-                            <CardHeader className="pb-4">
-                                <div className="flex items-center gap-2">
-                                    <div className="rounded-lg bg-orange-500/10 p-2">
-                                        <Layers className="h-4 w-4 text-orange-600" />
-                                    </div>
-                                    <div>
-                                        <CardTitle className="text-base font-semibold">
-                                            By Category
-                                        </CardTitle>
-                                        <p className="text-xs text-muted-foreground">
-                                            This month
-                                        </p>
-                                    </div>
-                                </div>
-                            </CardHeader>
-                            <CardContent className="pb-6">
-                                {byCategory.length === 0 ? (
-                                    <div className="flex h-[200px] items-center justify-center rounded-lg border border-dashed">
-                                        <p className="text-sm text-muted-foreground">
-                                            No data yet
-                                        </p>
-                                    </div>
-                                ) : (
-                                    <ChartContainer
-                                        config={chartConfig}
-                                        className="mx-auto aspect-square h-[200px]"
-                                    >
-                                        <PieChart>
-                                            <ChartTooltip
-                                                content={
-                                                    <ChartTooltipContent
-                                                        formatter={(
-                                                            value,
-                                                            name,
-                                                        ) => [
-                                                            `$${Number(value).toFixed(2)}`,
-                                                            name,
-                                                        ]}
-                                                    />
-                                                }
-                                            />
-                                            <Pie
-                                                data={byCategory.map(
-                                                    (cat, i) => ({
-                                                        name: cat.name,
-                                                        value: Math.abs(
-                                                            toNumber(cat.total),
-                                                        ),
-                                                        fill: PIE_COLORS[
-                                                            i %
-                                                                PIE_COLORS.length
-                                                        ],
-                                                    }),
-                                                )}
-                                                dataKey="value"
-                                                nameKey="name"
-                                                innerRadius={60}
-                                                outerRadius={80}
-                                                strokeWidth={2}
-                                                stroke="hsl(var(--background))"
-                                            >
-                                                <Label
-                                                    content={({ viewBox }) => {
-                                                        if (
-                                                            viewBox &&
-                                                            'cx' in viewBox &&
-                                                            'cy' in viewBox
-                                                        ) {
-                                                            const total =
-                                                                byCategory.reduce(
-                                                                    (
-                                                                        sum,
-                                                                        cat,
-                                                                    ) =>
-                                                                        sum +
-                                                                        Math.abs(
-                                                                            toNumber(
-                                                                                cat.total,
-                                                                            ),
-                                                                        ),
-                                                                    0,
-                                                                );
-                                                            return (
-                                                                <text
-                                                                    x={
-                                                                        viewBox.cx
-                                                                    }
-                                                                    y={
-                                                                        viewBox.cy
-                                                                    }
-                                                                    textAnchor="middle"
-                                                                    dominantBaseline="middle"
-                                                                >
-                                                                    <tspan
-                                                                        x={
-                                                                            viewBox.cx
-                                                                        }
-                                                                        y={
-                                                                            viewBox.cy
-                                                                        }
-                                                                        className="fill-foreground text-xl font-bold"
-                                                                    >
-                                                                        $
-                                                                        {formatCurrency(
-                                                                            total,
-                                                                        )}
-                                                                    </tspan>
-                                                                    <tspan
-                                                                        x={
-                                                                            viewBox.cx
-                                                                        }
-                                                                        y={
-                                                                            (viewBox.cy ||
-                                                                                0) +
-                                                                            20
-                                                                        }
-                                                                        className="fill-muted-foreground text-xs"
-                                                                    >
-                                                                        Total
-                                                                    </tspan>
-                                                                </text>
-                                                            );
-                                                        }
-                                                    }}
-                                                />
-                                            </Pie>
-                                        </PieChart>
-                                    </ChartContainer>
-                                )}
-                            </CardContent>
-                        </Card>
+                        {/* By Category (Expenses Only) */}
+                        <ByCategoryCard
+                            byCategory={byCategory}
+                            formatCurrency={formatCurrency}
+                            toNumber={toNumber}
+                        />
 
-                        {/* By Merchant */}
-                        <Card>
-                            <CardHeader className="pb-4">
-                                <div className="flex items-center gap-2">
-                                    <div className="rounded-lg bg-cyan-500/10 p-2">
-                                        <Store className="h-4 w-4 text-cyan-600" />
-                                    </div>
-                                    <div>
-                                        <CardTitle className="text-base font-semibold">
-                                            By Merchant
-                                        </CardTitle>
-                                        <p className="text-xs text-muted-foreground">
-                                            This month
-                                        </p>
-                                    </div>
-                                </div>
-                            </CardHeader>
-                            <CardContent className="pb-6">
-                                {byMerchant.length === 0 ? (
-                                    <div className="flex h-[200px] items-center justify-center rounded-lg border border-dashed">
-                                        <p className="text-sm text-muted-foreground">
-                                            No data yet
-                                        </p>
-                                    </div>
-                                ) : (
-                                    <ChartContainer
-                                        config={chartConfig}
-                                        className="mx-auto aspect-square h-[200px]"
-                                    >
-                                        <PieChart>
-                                            <ChartTooltip
-                                                content={
-                                                    <ChartTooltipContent
-                                                        formatter={(
-                                                            value,
-                                                            name,
-                                                        ) => [
-                                                            `$${Number(value).toFixed(2)}`,
-                                                            name,
-                                                        ]}
-                                                    />
-                                                }
-                                            />
-                                            <Pie
-                                                data={byMerchant.map(
-                                                    (merchant, i) => ({
-                                                        name: merchant.name,
-                                                        value: Math.abs(
-                                                            toNumber(
-                                                                merchant.total,
-                                                            ),
-                                                        ),
-                                                        fill: PIE_COLORS[
-                                                            (i + 3) %
-                                                                PIE_COLORS.length
-                                                        ],
-                                                    }),
-                                                )}
-                                                dataKey="value"
-                                                nameKey="name"
-                                                innerRadius={60}
-                                                outerRadius={80}
-                                                strokeWidth={2}
-                                                stroke="hsl(var(--background))"
-                                            >
-                                                <Label
-                                                    content={({ viewBox }) => {
-                                                        if (
-                                                            viewBox &&
-                                                            'cx' in viewBox &&
-                                                            'cy' in viewBox
-                                                        ) {
-                                                            const total =
-                                                                byMerchant.reduce(
-                                                                    (sum, m) =>
-                                                                        sum +
-                                                                        Math.abs(
-                                                                            toNumber(
-                                                                                m.total,
-                                                                            ),
-                                                                        ),
-                                                                    0,
-                                                                );
-                                                            return (
-                                                                <text
-                                                                    x={
-                                                                        viewBox.cx
-                                                                    }
-                                                                    y={
-                                                                        viewBox.cy
-                                                                    }
-                                                                    textAnchor="middle"
-                                                                    dominantBaseline="middle"
-                                                                >
-                                                                    <tspan
-                                                                        x={
-                                                                            viewBox.cx
-                                                                        }
-                                                                        y={
-                                                                            viewBox.cy
-                                                                        }
-                                                                        className="fill-foreground text-xl font-bold"
-                                                                    >
-                                                                        $
-                                                                        {formatCurrency(
-                                                                            total,
-                                                                        )}
-                                                                    </tspan>
-                                                                    <tspan
-                                                                        x={
-                                                                            viewBox.cx
-                                                                        }
-                                                                        y={
-                                                                            (viewBox.cy ||
-                                                                                0) +
-                                                                            20
-                                                                        }
-                                                                        className="fill-muted-foreground text-xs"
-                                                                    >
-                                                                        Total
-                                                                    </tspan>
-                                                                </text>
-                                                            );
-                                                        }
-                                                    }}
-                                                />
-                                            </Pie>
-                                        </PieChart>
-                                    </ChartContainer>
-                                )}
-                            </CardContent>
-                        </Card>
+                        {/* By Merchant (Expenses Only) */}
+                        <ByMerchantCard
+                            byMerchant={byMerchant}
+                            formatCurrency={formatCurrency}
+                            toNumber={toNumber}
+                        />
                     </div>
 
                     {/* Recent Transactions */}
