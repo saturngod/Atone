@@ -117,10 +117,10 @@ function ByCategoryCard({
     formatCurrency: (amount: string | number) => string;
     toNumber: (value: string | number) => number;
 }) {
-    // Filter to only show expenses (negative totals) and sort by amount descending
+    // Filter to only show expenses (positive totals in backend) and sort by amount descending
     const expenseCategories = useMemo(() => {
         return byCategory
-            .filter((cat) => toNumber(cat.total) < 0)
+            .filter((cat) => toNumber(cat.total) > 0)
             .map((cat) => ({
                 name: cat.name,
                 amount: Math.abs(toNumber(cat.total)),
@@ -219,10 +219,10 @@ function ByMerchantCard({
     formatCurrency: (amount: string | number) => string;
     toNumber: (value: string | number) => number;
 }) {
-    // Filter to only show expenses (negative totals) and sort by amount descending
+    // Filter to only show expenses (positive totals in backend) and sort by amount descending
     const expenseMerchants = useMemo(() => {
         return byMerchant
-            .filter((m) => toNumber(m.total) < 0)
+            .filter((m) => toNumber(m.total) > 0)
             .map((m) => ({
                 name: m.name,
                 amount: Math.abs(toNumber(m.total)),
