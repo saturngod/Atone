@@ -107,7 +107,7 @@ const PROGRESS_COLORS = [
     'hsl(142, 71%, 45%)', // green
 ];
 
-// By Category Card Component - Shows expenses only with progress bars
+// By Category Card Component - Shows expenses only
 function ByCategoryCard({
     byCategory,
     formatCurrency,
@@ -123,44 +123,26 @@ function ByCategoryCard({
             .filter((cat) => toNumber(cat.total) > 0)
             .map((cat) => ({
                 name: cat.name,
-                amount: Math.abs(toNumber(cat.total)),
+                amount: toNumber(cat.total),
             }))
             .sort((a, b) => b.amount - a.amount);
     }, [byCategory, toNumber]);
 
-    // Get the maximum amount for calculating progress percentage
-    const maxAmount = useMemo(() => {
-        if (expenseCategories.length === 0) return 0;
-        return Math.max(...expenseCategories.map((c) => c.amount));
-    }, [expenseCategories]);
-
-    // Calculate total expenses
-    const totalExpense = useMemo(() => {
-        return expenseCategories.reduce((sum, cat) => sum + cat.amount, 0);
-    }, [expenseCategories]);
-
     return (
         <Card>
             <CardHeader className="pb-4">
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                        <div className="rounded-lg bg-orange-500/10 p-2">
-                            <Layers className="h-4 w-4 text-orange-600" />
-                        </div>
-                        <div>
-                            <CardTitle className="text-base font-semibold">
-                                By Category
-                            </CardTitle>
-                            <p className="text-xs text-muted-foreground">
-                                Expenses this month
-                            </p>
-                        </div>
+                <div className="flex items-center gap-2">
+                    <div className="rounded-lg bg-orange-500/10 p-2">
+                        <Layers className="h-4 w-4 text-orange-600" />
                     </div>
-                    {totalExpense > 0 && (
-                        <span className="text-lg font-bold text-red-600">
-                            ${formatCurrency(totalExpense)}
-                        </span>
-                    )}
+                    <div>
+                        <CardTitle className="text-base font-semibold">
+                            By Category
+                        </CardTitle>
+                        <p className="text-xs text-muted-foreground">
+                            This month
+                        </p>
+                    </div>
                 </div>
             </CardHeader>
             <CardContent className="pb-6">
@@ -171,37 +153,32 @@ function ByCategoryCard({
                         </p>
                     </div>
                 ) : (
-                    <div className="space-y-4">
-                        {expenseCategories.map((cat, index) => {
-                            const percentage =
-                                maxAmount > 0
-                                    ? (cat.amount / maxAmount) * 100
-                                    : 0;
-                            const color =
-                                PROGRESS_COLORS[index % PROGRESS_COLORS.length];
-
-                            return (
-                                <div key={cat.name} className="space-y-1.5">
-                                    <div className="flex items-center justify-between text-sm">
-                                        <span className="max-w-[60%] truncate font-medium">
-                                            {cat.name}
-                                        </span>
-                                        <span className="font-semibold text-red-600">
-                                            ${formatCurrency(cat.amount)}
-                                        </span>
-                                    </div>
-                                    <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
-                                        <div
-                                            className="h-full rounded-full transition-all duration-500 ease-out"
-                                            style={{
-                                                width: `${percentage}%`,
-                                                backgroundColor: color,
-                                            }}
-                                        />
-                                    </div>
+                    <div className="space-y-3">
+                        {expenseCategories.map((cat, index) => (
+                            <div
+                                key={cat.name}
+                                className="flex items-center justify-between rounded-lg bg-muted/50 p-3 transition-colors hover:bg-muted"
+                            >
+                                <div className="flex items-center gap-3">
+                                    <div
+                                        className="h-3 w-3 rounded-full"
+                                        style={{
+                                            backgroundColor:
+                                                PROGRESS_COLORS[
+                                                    index %
+                                                        PROGRESS_COLORS.length
+                                                ],
+                                        }}
+                                    />
+                                    <span className="font-medium">
+                                        {cat.name}
+                                    </span>
                                 </div>
-                            );
-                        })}
+                                <span className="text-sm font-medium text-red-600">
+                                    -${formatCurrency(cat.amount)}
+                                </span>
+                            </div>
+                        ))}
                     </div>
                 )}
             </CardContent>
@@ -209,7 +186,7 @@ function ByCategoryCard({
     );
 }
 
-// By Merchant Card Component - Shows expenses only with progress bars
+// By Merchant Card Component - Shows expenses only
 function ByMerchantCard({
     byMerchant,
     formatCurrency,
@@ -225,44 +202,26 @@ function ByMerchantCard({
             .filter((m) => toNumber(m.total) > 0)
             .map((m) => ({
                 name: m.name,
-                amount: Math.abs(toNumber(m.total)),
+                amount: toNumber(m.total),
             }))
             .sort((a, b) => b.amount - a.amount);
     }, [byMerchant, toNumber]);
 
-    // Get the maximum amount for calculating progress percentage
-    const maxAmount = useMemo(() => {
-        if (expenseMerchants.length === 0) return 0;
-        return Math.max(...expenseMerchants.map((m) => m.amount));
-    }, [expenseMerchants]);
-
-    // Calculate total expenses
-    const totalExpense = useMemo(() => {
-        return expenseMerchants.reduce((sum, m) => sum + m.amount, 0);
-    }, [expenseMerchants]);
-
     return (
         <Card>
             <CardHeader className="pb-4">
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                        <div className="rounded-lg bg-cyan-500/10 p-2">
-                            <Store className="h-4 w-4 text-cyan-600" />
-                        </div>
-                        <div>
-                            <CardTitle className="text-base font-semibold">
-                                By Merchant
-                            </CardTitle>
-                            <p className="text-xs text-muted-foreground">
-                                Expenses this month
-                            </p>
-                        </div>
+                <div className="flex items-center gap-2">
+                    <div className="rounded-lg bg-cyan-500/10 p-2">
+                        <Store className="h-4 w-4 text-cyan-600" />
                     </div>
-                    {totalExpense > 0 && (
-                        <span className="text-lg font-bold text-red-600">
-                            ${formatCurrency(totalExpense)}
-                        </span>
-                    )}
+                    <div>
+                        <CardTitle className="text-base font-semibold">
+                            By Merchant
+                        </CardTitle>
+                        <p className="text-xs text-muted-foreground">
+                            This month
+                        </p>
+                    </div>
                 </div>
             </CardHeader>
             <CardContent className="pb-6">
@@ -273,42 +232,32 @@ function ByMerchantCard({
                         </p>
                     </div>
                 ) : (
-                    <div className="space-y-4">
-                        {expenseMerchants.map((merchant, index) => {
-                            const percentage =
-                                maxAmount > 0
-                                    ? (merchant.amount / maxAmount) * 100
-                                    : 0;
-                            const color =
-                                PROGRESS_COLORS[
-                                    (index + 3) % PROGRESS_COLORS.length
-                                ];
-
-                            return (
-                                <div
-                                    key={merchant.name}
-                                    className="space-y-1.5"
-                                >
-                                    <div className="flex items-center justify-between text-sm">
-                                        <span className="max-w-[60%] truncate font-medium">
-                                            {merchant.name}
-                                        </span>
-                                        <span className="font-semibold text-red-600">
-                                            ${formatCurrency(merchant.amount)}
-                                        </span>
-                                    </div>
-                                    <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
-                                        <div
-                                            className="h-full rounded-full transition-all duration-500 ease-out"
-                                            style={{
-                                                width: `${percentage}%`,
-                                                backgroundColor: color,
-                                            }}
-                                        />
-                                    </div>
+                    <div className="space-y-3">
+                        {expenseMerchants.map((merchant, index) => (
+                            <div
+                                key={merchant.name}
+                                className="flex items-center justify-between rounded-lg bg-muted/50 p-3 transition-colors hover:bg-muted"
+                            >
+                                <div className="flex items-center gap-3">
+                                    <div
+                                        className="h-3 w-3 rounded-full"
+                                        style={{
+                                            backgroundColor:
+                                                PROGRESS_COLORS[
+                                                    (index + 4) %
+                                                        PROGRESS_COLORS.length
+                                                ],
+                                        }}
+                                    />
+                                    <span className="font-medium">
+                                        {merchant.name}
+                                    </span>
                                 </div>
-                            );
-                        })}
+                                <span className="text-sm font-medium text-red-600">
+                                    -${formatCurrency(merchant.amount)}
+                                </span>
+                            </div>
+                        ))}
                     </div>
                 )}
             </CardContent>
